@@ -1,0 +1,108 @@
+<?php
+
+namespace Phantom\Database;
+
+use PDO;
+use PDOException;
+use Exception;
+
+class Database
+{
+    /**
+     * The active PDO connection.
+     *
+     * @var PDO
+     */
+    protected $pdo;
+
+    /**
+     * Create a new Database instance.
+     *
+     * @param  array  $config
+     * @return void
+     */
+    public function __construct(array $config)
+    {
+        $default = $config['default'];
+        $connectionConfig = $config['connections'][$default];
+
+        $this->connect($connectionConfig);
+    }
+
+    /**
+     * Establish the PDO connection.
+     *
+     * @param  array  $config
+     * @return void
+     * @throws Exception
+     */
+    protected function connect(array $config)
+    {
+        $driver = $config['driver'];
+
+        try {
+            if ($driver === 'mysql') {
+                $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']};charset={$config['charset']}";
+                $this->pdo = new PDO($dsn, $config['username'], $config['password']);
+            } elseif ($driver === 'sqlite') {
+                $dsn = "sqlite:{$config['database']}";
+                $this->pdo = new PDO($dsn);
+            } else {
+                throw new Exception("Database driver [{$driver}] not supported.");
+            }
+
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+
+        } catch (PDOException $e) {
+            throw new Exception("Database connection failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get a query builder instance for a table.
+     *
+     * @param  string  $table
+     * @return \Phantom\Database\Query\Builder
+     */
+    public function table($table)
+    {
+        return (new \Phantom\Database\Query\Builder($this))->table($table);
+    }
+
+    /**
+     * Execute a raw SQL query.
+     *
+     * @param  string  $sql
+     * @param  array   $params
+     * @return \PDOStatement
+     */
+    public function query($sql, $params = [])
+    {
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
+        return $statement;
+    }
+
+    /**
+     * Fetch all results from a query.
+     *
+     * @param  string  $sql
+     * @param  array   $params
+     * @return array
+     */
+    public function select($sql, $params = [])
+    {
+        return $this->query($sql, $params)->fetchAll();
+    }
+    
+    /**
+     * Get the PDO instance.
+     * 
+     * @return PDO
+     */
+    public function getPdo()
+    {
+        return $this->pdo;
+    }
+}

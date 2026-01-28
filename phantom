@@ -1,0 +1,29 @@
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Phantom\Core\Application;
+
+$app = new Application(__DIR__);
+
+// CLI Entry point logic
+$args = $_SERVER['argv'];
+array_shift($args); // Remove script name
+
+$command = $args[0] ?? 'list';
+
+if ($command === 'list') {
+    echo "Phantom Framework v" . $app->version() . "\n\n";
+    echo "Available commands:\n";
+    echo "  list      List available commands\n";
+    echo "  version   Display version\n";
+    echo "  migrate   Run database migrations\n";
+} elseif ($command === 'version') {
+    echo "Phantom Framework v" . $app->version() . "\n";
+} elseif ($command === 'migrate') {
+    echo "Running migrations...\n";
+    // Migration logic will go here
+} else {
+    echo "Unknown command: {$command}\n";
+}
+
