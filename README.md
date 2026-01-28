@@ -41,6 +41,21 @@ $router->get('/hola', function() {
 $users = User::where('active', 1)->get();
 ```
 
+## Phantom CLI
+
+El framework incluye una potente interfaz de línea de comandos para automatizar tareas. Puedes ejecutarla usando el binario `phantom` en la raíz del proyecto:
+
+```bash
+# Listar todos los comandos disponibles
+php phantom list
+
+# Ver la versión actual del framework
+php phantom version
+
+# Ejecutar las migraciones de la base de datos
+php phantom migrate
+```
+
 ## Contribuir
 
 ¡Las contribuciones son bienvenidas! Por favor, revisa las guías de contribución antes de enviar un Pull Request.
