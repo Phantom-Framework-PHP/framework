@@ -15,15 +15,159 @@ $command = $args[0] ?? 'list';
 if ($command === 'list') {
     echo "Phantom Framework v" . $app->version() . "\n\n";
     echo "Available commands:\n";
-    echo "  list      List available commands\n";
-    echo "  version   Display version\n";
-    echo "  migrate   Run database migrations\n";
+    echo "  list                List available commands\n";
+    echo "  version             Display version\n";
+    echo "  migrate             Run database migrations\n";
+    echo "  migrate:rollback    Rollback the last database migration\n";
+    echo "  db:seed             Seed the database with records\n";
+    echo "  make:migration      Create a new migration file\n";
+    echo "  make:model          Create a new model class\n";
+    echo "  make:controller     Create a new controller class\n";
+    echo "  make:view           Create a new view file\n";
+    echo "  make:seeder         Create a new seeder class\n";
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
+} elseif ($command === 'make:seeder') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Seeder name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/database/seeders/{$name}.php";
+    if (file_exists($path)) {
+        echo "Error: Seeder already exists!\n";
+        exit(1);
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/seeder.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+
+    file_put_contents($path, $content);
+    echo "Created Seeder: database/seeders/{$name}.php\n";
+
+} elseif ($command === 'db:seed') {
+    echo "Seeding database...\n";
+    $files = glob(__DIR__ . '/database/seeders/*.php');
+    foreach ($files as $file) {
+        require_once $file;
+        $className = "Database\Seeders\" . basename($file, '.php');
+        if (class_exists($className)) {
+            $seeder = new $className();
+            $seeder->run();
+            echo "Seeded: " . $className . "\n";
+        }
+    }
+    echo "Database seeding completed.\n";
+
+} elseif ($command === 'make:view') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: View name required.\n";
+        exit(1);
+    }
+
+    $viewPath = str_replace('.', '/', $name);
+    $path = __DIR__ . "/resources/views/{$viewPath}.php";
+    
+    $directory = dirname($path);
+    if (!file_exists($directory)) {
+        mkdir($directory, 0755, true);
+    }
+
+    if (file_exists($path)) {
+        echo "Error: View already exists!\n";
+        exit(1);
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/view.stub');
+    $content = str_replace('{{title}}', ucfirst(str_replace(['.', '_', '/'], ' ', $name)), $stub);
+
+    file_put_contents($path, $content);
+    echo "Created View: resources/views/{$viewPath}.php\n";
+
+} elseif ($command === 'make:controller') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Controller name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/app/Http/Controllers/{$name}.php";
+    if (file_exists($path)) {
+        echo "Error: Controller already exists!\n";
+        exit(1);
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/controller.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+
+    file_put_contents($path, $content);
+    echo "Created Controller: app/Http/Controllers/{$name}.php\n";
+
+} elseif ($command === 'make:model') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Model name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/app/Models/{$name}.php";
+    if (file_exists($path)) {
+        echo "Error: Model already exists!\n";
+        exit(1);
+    }
+
+    $table = strtolower($name) . 's'; // Basic pluralization
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/model.stub');
+    $content = str_replace(['{{class}}', '{{table}}'], [$name, $table], $stub);
+    $content = str_replace('namespace App\Models;', 'namespace Phantom\Models;', $content);
+
+    file_put_contents($path, $content);
+    echo "Created Model: app/Models/{$name}.php\n";
+
+} elseif ($command === 'make:migration') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Migration name required. Example: php phantom make:migration create_users_table\n";
+        exit(1);
+    }
+
+    $timestamp = date('Y_m_d_His');
+    $fileName = "{$timestamp}_{$name}.php";
+    $path = __DIR__ . "/database/migrations/{$fileName}";
+
+    $table = 'table_name';
+    if (preg_match('/create_(.*)_table/', $name, $matches)) {
+        $table = $matches[1];
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/migration.stub');
+    $content = str_replace('{{table}}', $table, $stub);
+
+    file_put_contents($path, $content);
+    echo "Created Migration: database/migrations/{$fileName}\n";
+
 } elseif ($command === 'migrate') {
     echo "Running migrations...\n";
-    // Migration logic will go here
+    $files = glob(__DIR__ . '/database/migrations/*.php');
+    foreach ($files as $file) {
+        $migration = require $file;
+        $migration->up();
+        echo "Migrated: " . basename($file) . "\n";
+    }
+    echo "All migrations completed.\n";
+
+} elseif ($command === 'migrate:rollback') {
+    echo "Rolling back migrations...\n";
+    $files = glob(__DIR__ . '/database/migrations/*.php');
+    rsort($files); // Rollback in reverse order
+    foreach ($files as $file) {
+        $migration = require $file;
+        $migration->down();
+        echo "Rolled back: " . basename($file) . "\n";
+    }
+    echo "Rollback completed.\n";
 } else {
     echo "Unknown command: {$command}\n";
 }
-
