@@ -9,7 +9,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.7.0';
+    const VERSION = '1.8.1';
 
     /**
      * The base path for the Phantom installation.
@@ -31,8 +31,28 @@ class Application extends Container
         }
 
         $this->registerBaseBindings();
+        $this->registerErrorHandlers();
         $this->loadEnvironment();
         $this->loadConfiguration();
+    }
+
+    /**
+     * Register global error and exception handlers.
+     *
+     * @return void
+     */
+    protected function registerErrorHandlers()
+    {
+        set_exception_handler(function ($e) {
+            $response = (new \Phantom\Core\Exceptions\Handler())->render($e);
+            $response->send();
+        });
+
+        set_error_handler(function ($level, $message, $file, $line) {
+            if (error_reporting() & $level) {
+                throw new \ErrorException($message, 0, $level, $file, $line);
+            }
+        });
     }
 
     /**
@@ -151,11 +171,11 @@ class Application extends Container
      */
     public function handle($request)
     {
-        // Load routes
-        $router = $this->make('router');
-        $router->loadRoutes($this->basePath . '/routes/web.php');
-        
         try {
+            // Load routes
+            $router = $this->make('router');
+            $router->loadRoutes($this->basePath . '/routes/web.php');
+            
             return $router->dispatch($request);
         } catch (\Throwable $e) {
             return (new \Phantom\Core\Exceptions\Handler())->render($e);
