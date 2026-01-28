@@ -1,97 +1,95 @@
-# Phantom Framework v1.7.0
+# Phantom Framework v1.8.1
 
-Phantom es un framework PHP minimalista, elegante y rápido, diseñado para desarrolladores que buscan la estructura de Laravel con la ligereza de un micro-framework.
+Phantom is a minimalist, elegant, and fast PHP framework, designed for developers seeking Laravel's structure with the lightness of a micro-framework.
 
-## Características Principales
+## Main Features
 
-- **📦 Contenedor IoC**: Gestión de dependencias potente y sencilla.
-- **🛣️ Enrutamiento Fluido**: Soporte para rutas web, middlewares y controladores.
-- **🛡️ Seguridad Nativa**: Protección CSRF, validación de datos y hashing con Argon2/Bcrypt.
-- **🗄️ Phantom ORM**: Query Builder fluido y modelo Active Record.
-- **🎨 Motor de Vistas**: Sistema de plantillas PHP nativo limpio y eficiente.
-- **🌐 Internacionalización**: Soporte multi-idioma integrado.
-- **💻 Phantom CLI**: Interfaz de línea de comandos para automatización y generación de código.
-- **✉️ Mail System**: Sistema de envío de correos electrónico integrado.
-- **📁 File Storage**: Gestión de archivos con validación de seguridad avanzada (MIME + Magic Numbers).
-- **🌱 Seeders & Factories**: Sistema para poblar la base de datos con datos de prueba.
+- **📦 IoC Container**: Simple and powerful dependency management.
+- **🛣️ Fluent Routing**: Support for web routes, middlewares, and controllers.
+- **🛡️ Native Security**: CSRF protection, data validation, and hashing with Argon2/Bcrypt.
+- **🗄️ Phantom ORM**: Fluent Query Builder and Active Record model.
+- **🎨 View Engine**: Clean and efficient native PHP template system.
+- **🌐 Internationalization**: Built-in multi-language support.
+- **💻 Phantom CLI**: Command line interface for automation and code generation.
+- **✉️ Mail System**: Integrated email sending system.
+- **📁 File Storage**: File management with advanced security validation (MIME + Magic Numbers).
+- **🌱 Seeders & Factories**: System for populating the database with test data.
+- **📝 Advanced Logging**: Automatic error recording in local logs.
+- **🎨 Elegant Error Handling**: Custom Tailwind CSS error views and refined debug mode.
 
-## Requisitos
+## Requirements
 
-- PHP 8.1 o superior.
-- Extensiones: PDO, OpenSSL, Mbstring, Fileinfo.
+- PHP 8.1 or superior.
+- Extensions: PDO, OpenSSL, Mbstring, Fileinfo.
 
-## Instalación rápida
+## Quick Installation
 
-1. Clona el repositorio.
-2. Ejecuta `composer install`.
-3. Copia `.env.example` a `.env` y configura tus credenciales.
-4. Inicia tu servidor: `php -S localhost:8000 -t public`.
+1. Clone the repository.
+2. Run `composer install`.
+3. Copy `.env.example` to `.env` and configure your credentials.
+4. Start your server: `php -S localhost:8000 -t public`.
 
-## Uso básico
+## Basic Usage
 
-### Definir una ruta
+### Defining a Route
 ```php
 // routes/web.php
-$router->get('/hola', function() {
-    return view('welcome', ['name' => 'Usuario']);
+$router->get('/hello', function() {
+    return view('welcome', ['name' => 'User']);
 });
 ```
 
-### Usar el ORM
+### Using the ORM
 ```php
 $users = User::where('active', 1)->get();
 ```
 
 ## Phantom CLI
 
-El framework incluye una potente interfaz de línea de comandos para automatizar tareas. Puedes ejecutarla usando el binario `phantom` en la raíz del proyecto:
+The framework includes a powerful command-line interface. You can run it using the `phantom` binary in the project root:
 
-### Comandos Generales
+### General Commands
 ```bash
-# Listar todos los comandos disponibles
+# List all available commands
 php phantom list
 
-# Ver la versión actual del framework
+# See current framework version
 php phantom version
 ```
 
-### Gestión de Base de Datos
+### Database Management
 ```bash
-# Ejecutar las migraciones
+# Run migrations
 php phantom migrate
 
-# Revertir la última migración
+# Rollback last migration
 php phantom migrate:rollback
 
-# Poblar la base de datos con seeders
+# Seed the database
 php phantom db:seed
 ```
 
-### Generación de Código (Scaffolding)
+### Code Generation (Scaffolding)
 ```bash
-# Crear una nueva migración
+# Create a new migration
 php phantom make:migration create_posts_table
 
-# Crear un nuevo modelo
+# Create a new model
 php phantom make:model Post
 
-# Crear un nuevo controlador
+# Create a new controller
 php phantom make:controller PostController
 
-# Crear una nueva vista (soporta notación de puntos)
+# Create a new view (supports dot notation)
 php phantom make:view posts.index
 
-# Crear un nuevo seeder
+# Create a new seeder
 php phantom make:seeder PostSeeder
 ```
 
-## Contribuir
+## License
 
-¡Las contribuciones son bienvenidas! Por favor, revisa las guías de contribución antes de enviar un Pull Request.
-
-## Licencia
-
-Este proyecto está bajo la [Licencia MIT](LICENSE).
+This project is under the [MIT License](LICENSE).
 
 ---
-Diseñado con ❤️ para la velocidad y la elegancia.
+Designed with ❤️ for speed and elegance.
