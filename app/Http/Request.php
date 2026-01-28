@@ -9,12 +9,14 @@ class Request
     protected $queryParams;
     protected $postParams;
     protected $serverParams;
+    protected $files;
 
-    public function __construct(array $server = [], array $get = [], array $post = [])
+    public function __construct(array $server = [], array $get = [], array $post = [], array $files = [])
     {
         $this->serverParams = $server;
         $this->queryParams = $get;
         $this->postParams = $post;
+        $this->files = $files;
         
         $this->uri = $this->parseUri($server['REQUEST_URI'] ?? '/');
         $this->method = strtoupper($server['REQUEST_METHOD'] ?? 'GET');
@@ -27,7 +29,22 @@ class Request
      */
     public static function capture()
     {
-        return new static($_SERVER, $_GET, $_POST);
+        return new static($_SERVER, $_GET, $_POST, $_FILES);
+    }
+
+    /**
+     * Get an uploaded file.
+     *
+     * @param string $key
+     * @return UploadedFile|null
+     */
+    public function file($key)
+    {
+        if (isset($this->files[$key]) && $this->files[$key]['error'] === UPLOAD_ERR_OK) {
+            return new UploadedFile($this->files[$key]);
+        }
+
+        return null;
     }
 
     /**
