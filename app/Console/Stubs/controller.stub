@@ -1,0 +1,13 @@
+<?php
+
+namespace Phantom\Http\Controllers;
+
+use Phantom\Http\Request;
+
+class {{class}} extends Controller
+{
+    public function index(Request $request)
+    {
+        //
+    }
+}
