@@ -51,7 +51,7 @@ if ($command === 'list') {
     $files = glob(__DIR__ . '/database/seeders/*.php');
     foreach ($files as $file) {
         require_once $file;
-        $className = "Database\Seeders\" . basename($file, '.php');
+        $className = "Database\\Seeders\\" . basename($file, '.php');
         if (class_exists($className)) {
             $seeder = new $className();
             $seeder->run();
