@@ -45,7 +45,11 @@ class Router
      */
     protected function addRoute($method, $uri, $action)
     {
+        // Normalize URI
         $uri = '/' . ltrim($uri, '/');
+        if ($uri !== '/') {
+            $uri = rtrim($uri, '/');
+        }
         
         $route = [
             'method' => $method,
@@ -88,6 +92,12 @@ class Router
     {
         $method = $request->method();
         $uri = $request->uri();
+
+        // Normalize URI: ensure starts with / and remove trailing slash (unless it's just /)
+        $uri = '/' . ltrim($uri, '/');
+        if ($uri !== '/') {
+            $uri = rtrim($uri, '/');
+        }
 
         if (isset($this->routes[$method][$uri])) {
             $route = $this->routes[$method][$uri];
