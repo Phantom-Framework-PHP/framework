@@ -1,11 +1,11 @@
-# Phantom Framework v1.8.1
+# Phantom Framework v1.9.0
 
 Phantom is a minimalist, elegant, and fast PHP framework, designed for developers seeking Laravel's structure with the lightness of a micro-framework.
 
 ## Main Features
 
 - **📦 IoC Container**: Simple and powerful dependency management.
-- **🛣️ Fluent Routing**: Support for web routes, middlewares, and controllers.
+- **🛣️ Advanced Routing**: Route Groups, Named Routes, Middlewares, and Controllers.
 - **🛡️ Native Security**: CSRF protection, data validation, and hashing with Argon2/Bcrypt.
 - **🗄️ Phantom ORM**: Fluent Query Builder and Active Record model.
 - **🎨 View Engine**: Clean and efficient native PHP template system.
@@ -34,9 +34,20 @@ Phantom is a minimalist, elegant, and fast PHP framework, designed for developer
 ### Defining a Route
 ```php
 // routes/web.php
+use Phantom\Core\Router;
+
+// Simple Route
 $router->get('/hello', function() {
     return view('welcome', ['name' => 'User']);
+})->name('hello');
+
+// Route Group with Prefix and Middleware
+$router->group(['prefix' => 'admin', 'middleware' => 'auth'], function(Router $router) {
+    $router->get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
+
+// Generating URLs
+$url = route('admin.dashboard');
 ```
 
 ### Using the ORM

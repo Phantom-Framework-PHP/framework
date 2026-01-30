@@ -9,6 +9,8 @@ use Exception;
 class Router
 {
     protected $routes = [];
+    protected $namedRoutes = [];
+    protected $groupStack = [];
     protected $lastRoute;
 
     /**
@@ -36,6 +38,22 @@ class Router
     }
 
     /**
+     * Create a route group with shared attributes.
+     *
+     * @param array $attributes
+     * @param \Closure $callback
+     * @return void
+     */
+    public function group(array $attributes, $callback)
+    {
+        $this->groupStack[] = $attributes;
+
+        call_user_func($callback, $this);
+
+        array_pop($this->groupStack);
+    }
+
+    /**
      * Add a route to the collection.
      *
      * @param string $method
@@ -45,23 +63,108 @@ class Router
      */
     protected function addRoute($method, $uri, $action)
     {
-        // Normalize URI
+        // Calculate prefix and middleware from group stack
+        $prefix = '';
+        $middleware = [];
+        $namePrefix = '';
+
+        foreach ($this->groupStack as $group) {
+            if (isset($group['prefix'])) {
+                $prefix .= '/' . trim($group['prefix'], '/');
+            }
+            if (isset($group['middleware'])) {
+                $groupMiddleware = is_array($group['middleware']) ? $group['middleware'] : [$group['middleware']];
+                $middleware = array_merge($middleware, $groupMiddleware);
+            }
+            if (isset($group['as'])) {
+                $namePrefix .= $group['as'];
+            }
+        }
+
+        // Normalize URI with prefix
         $uri = '/' . ltrim($uri, '/');
-        if ($uri !== '/') {
-            $uri = rtrim($uri, '/');
+        $finalUri = $prefix . $uri;
+        
+        // Ensure final URI is normalized
+        $finalUri = '/' . ltrim($finalUri, '/');
+        if ($finalUri !== '/') {
+            $finalUri = rtrim($finalUri, '/');
         }
         
         $route = [
             'method' => $method,
-            'uri' => $uri,
+            'uri' => $finalUri,
             'action' => $action,
-            'middleware' => []
+            'middleware' => $middleware,
+            'name' => null
         ];
 
-        $this->routes[$method][$uri] = $route;
-        $this->lastRoute = &$this->routes[$method][$uri];
+        $this->routes[$method][$finalUri] = $route;
+        // Reference to the newly created route for chaining
+        $this->lastRoute = &$this->routes[$method][$finalUri];
+
+        // If we have a name prefix, we might want to apply it immediately if 'name' is chained later,
+        // but 'name()' method handles the full name. 
+        // Just store the prefix temporarily in the route if needed, 
+        // or better: The 'name' method will check the current stack or we store the namePrefix in the route.
+        // Let's store the namePrefix in the route array so ->name() can use it.
+        $this->lastRoute['name_prefix'] = $namePrefix;
 
         return $this;
+    }
+
+    /**
+     * Assign a name to the last registered route.
+     *
+     * @param string $name
+     * @return $this
+     */
+    public function name($name)
+    {
+        if ($this->lastRoute) {
+            $prefix = $this->lastRoute['name_prefix'] ?? '';
+            $fullName = $prefix . $name;
+            
+            $this->lastRoute['name'] = $fullName;
+            $this->namedRoutes[$fullName] = [
+                'uri' => $this->lastRoute['uri'],
+                'method' => $this->lastRoute['method'] // Storing method just in case
+            ];
+        }
+
+        return $this;
+    }
+
+    /**
+     * Generate a URL for a named route.
+     *
+     * @param string $name
+     * @param array $parameters
+     * @return string
+     * @throws Exception
+     */
+    public function route($name, $parameters = [])
+    {
+        if (!isset($this->namedRoutes[$name])) {
+            throw new Exception("Route not found: [{$name}]");
+        }
+
+        $uri = $this->namedRoutes[$name]['uri'];
+
+        // Replace parameters in URI (e.g., /posts/{id})
+        foreach ($parameters as $key => $value) {
+            if (strpos($uri, '{' . $key . '}') !== false) {
+                $uri = str_replace('{' . $key . '}', $value, $uri);
+                unset($parameters[$key]);
+            }
+        }
+
+        // Append remaining parameters as query string
+        if (!empty($parameters)) {
+            $uri .= '?' . http_build_query($parameters);
+        }
+
+        return url($uri);
     }
 
     /**

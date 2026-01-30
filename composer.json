@@ -1,5 +1,5 @@
 {
-    "name": "phantom/framework",
+    "name": "phantom-php/framework",
     "description": "A minimalist but powerful PHP framework",
     "type": "project",
     "license": "MIT",

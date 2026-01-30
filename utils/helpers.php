@@ -254,6 +254,20 @@ if (! function_exists('url')) {
     }
 }
 
+if (! function_exists('route')) {
+    /**
+     * Generate a URL for a named route.
+     *
+     * @param  string  $name
+     * @param  array   $parameters
+     * @return string
+     */
+    function route($name, $parameters = [])
+    {
+        return app('router')->route($name, $parameters);
+    }
+}
+
 if (! function_exists('redirect')) {
     /**
      * Create a redirect response.

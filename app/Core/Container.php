@@ -60,6 +60,19 @@ class Container
     }
 
     /**
+     * Register an existing instance as shared in the container.
+     *
+     * @param  string  $abstract
+     * @param  mixed   $instance
+     * @return mixed
+     */
+    public function instance($abstract, $instance)
+    {
+        $this->instances[$abstract] = $instance;
+        return $instance;
+    }
+
+    /**
      * Resolve the given type from the container.
      *
      * @param  string  $abstract

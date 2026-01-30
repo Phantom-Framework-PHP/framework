@@ -40,6 +40,26 @@ class Response
     }
 
     /**
+     * Get the content of the response.
+     *
+     * @return mixed
+     */
+    public function getContent()
+    {
+        return $this->content;
+    }
+
+    /**
+     * Get the status code of the response.
+     *
+     * @return int
+     */
+    public function getStatusCode()
+    {
+        return $this->statusCode;
+    }
+
+    /**
      * Send the response to the browser.
      *
      * @return void
