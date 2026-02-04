@@ -9,7 +9,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.9.0';
+    const VERSION = '1.9.1';
 
     /**
      * The base path for the Phantom installation.
@@ -164,6 +164,13 @@ class Application extends Container
     }
     
     /**
+     * Determine if the application has booted.
+     * 
+     * @var bool
+     */
+    protected $booted = false;
+
+    /**
      * Handle the incoming request.
      *
      * @param  \Phantom\Http\Request  $request
@@ -172,14 +179,29 @@ class Application extends Container
     public function handle($request)
     {
         try {
-            // Load routes
-            $router = $this->make('router');
-            $router->loadRoutes($this->basePath . '/routes/web.php');
+            $this->boot();
             
-            return $router->dispatch($request);
+            return $this->make('router')->dispatch($request);
         } catch (\Throwable $e) {
             return (new \Phantom\Core\Exceptions\Handler())->render($e);
         }
+    }
+
+    /**
+     * Boot the application services.
+     * 
+     * @return void
+     */
+    public function boot()
+    {
+        if ($this->booted) {
+            return;
+        }
+
+        // Load routes
+        $this->make('router')->loadRoutes($this->basePath . '/routes/web.php');
+
+        $this->booted = true;
     }
 
     /**
