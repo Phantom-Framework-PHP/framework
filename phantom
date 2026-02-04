@@ -140,13 +140,24 @@ if ($command === 'list') {
     $table = 'table_name';
     if (preg_match('/create_(.*)_table/', $name, $matches)) {
         $table = $matches[1];
+    } elseif (preg_match('/(?:add|remove|update)_.*_to_(.*)_table/', $name, $matches)) {
+        $table = $matches[1];
     }
 
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/migration.stub');
-    $content = str_replace('{{table}}', $table, $stub);
+    try {
+        $stubPath = __DIR__ . '/app/Console/Stubs/migration.stub';
+        if (!file_exists($stubPath)) {
+            throw new Exception("Migration stub not found at {$stubPath}");
+        }
+        $stub = file_get_contents($stubPath);
+        $content = str_replace('{{table}}', $table, $stub);
 
-    file_put_contents($path, $content);
-    echo "Created Migration: database/migrations/{$fileName}\n";
+        file_put_contents($path, $content);
+        echo "Created Migration: database/migrations/{$fileName}\n";
+    } catch (Exception $e) {
+        echo "Error creating migration: " . $e->getMessage() . "\n";
+        exit(1);
+    }
 
 } elseif ($command === 'migrate') {
     echo "Running migrations...\n";
