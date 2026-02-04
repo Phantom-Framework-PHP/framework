@@ -202,15 +202,23 @@ class Router
             $uri = rtrim($uri, '/');
         }
 
-        if (isset($this->routes[$method][$uri])) {
-            $route = $this->routes[$method][$uri];
-            
-            return (new Pipeline())
-                ->send($request)
-                ->through($route['middleware'])
-                ->then(function($request) use ($route) {
-                    return $this->resolveAction($route['action'], $request);
-                });
+        if (isset($this->routes[$method])) {
+            foreach ($this->routes[$method] as $routeUri => $route) {
+                $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $routeUri);
+                $pattern = "#^" . $pattern . "$#";
+
+                if (preg_match($pattern, $uri, $matches)) {
+                    $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
+                    $request->setRouteParams($params);
+
+                    return (new Pipeline())
+                        ->send($request)
+                        ->through($route['middleware'])
+                        ->then(function($request) use ($route) {
+                            return $this->resolveAction($route['action'], $request);
+                        });
+                }
+            }
         }
 
         throw new Exception("Route not found: [{$method}] {$uri}", 404);

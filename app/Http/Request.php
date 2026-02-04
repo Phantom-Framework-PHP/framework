@@ -8,6 +8,7 @@ class Request
     protected $method;
     protected $queryParams;
     protected $postParams;
+    protected $routeParams = [];
     protected $serverParams;
     protected $files;
 
@@ -70,11 +71,17 @@ class Request
 
     public function input($key, $default = null)
     {
-        return $this->postParams[$key] ?? $this->queryParams[$key] ?? $default;
+        return $this->postParams[$key] ?? $this->queryParams[$key] ?? $this->routeParams[$key] ?? $default;
+    }
+
+    public function setRouteParams(array $params)
+    {
+        $this->routeParams = $params;
+        return $this;
     }
 
     public function all()
     {
-        return array_merge($this->queryParams, $this->postParams);
+        return array_merge($this->queryParams, $this->postParams, $this->routeParams);
     }
 }
