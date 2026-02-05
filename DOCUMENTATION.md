@@ -1,4 +1,4 @@
-# Phantom Framework Documentation (v1.10.x)
+# Phantom Framework Documentation (v1.12.x)
 
 Welcome to the official manual for Phantom, the minimalist PHP framework for modern artisans. This guide provides a deep dive into every corner of the framework.
 
@@ -18,7 +18,10 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
 7.  [Collections](#collections)
 8.  [API Resources](#api-resources)
 9.  [Testing Suite](#testing)
-10. [Phantom CLI (Binary)](#cli)
+10. [Real-Time Communication](#real-time)
+    *   [Server-Sent Events (SSE)](#sse)
+    *   [Event Broadcasting](#broadcasting)
+11. [Phantom CLI (Binary)](#cli)
     *   [Generator Commands](#cli-generators)
     *   [Tinker (REPL)](#cli-tinker)
 
@@ -36,12 +39,18 @@ $config = app('config');
 $db = app('db');
 ```
 
-### Manual Binding
-In your service providers or boot logic:
+### Service Providers
+Providers are the heart of the modular architecture. You can register them in `config/app.php`.
 ```php
-app()->singleton(MyService::class, function() {
-    return new MyService('config-value');
-});
+namespace App\Providers;
+
+use Phantom\Core\ServiceProvider;
+
+class MyServiceProvider extends ServiceProvider {
+    public function register() {
+        $this->app->singleton('service', fn() => new MyService());
+    }
+}
 ```
 
 ---
@@ -58,19 +67,8 @@ $router->get('/user/{id}', function(int $id) {
 });
 ```
 
-### Controller Routing
-You don't need to manually inject the Request; Phantom does it for you:
-```php
-$router->post('/posts', [PostController::class, 'store']);
-```
-
 ### Controller Example with Injection
 ```php
-namespace Phantom\Http\Controllers;
-
-use Phantom\Http\Request;
-use App\Services\PostService;
-
 class PostController extends Controller {
     public function store(Request $request, PostService $service) {
         $data = $request->validate(['title' => 'required']);
@@ -92,11 +90,6 @@ Register them in the Router to run on every request:
 $router->use(\Phantom\Http\Middlewares\VerifyCsrfToken::class);
 ```
 
-### Route Middlewares
-```php
-$router->get('/admin', function() { ... })->middleware('auth');
-```
-
 ---
 
 <a name="requests"></a>
@@ -107,12 +100,10 @@ The `Request` object provides a clean API to interact with user input.
 ### Accessing Data
 ```php
 $request->all();           // Array of all inputs
-$request->input('name');   // Get specific field (default: null)
-$request->file('avatar');  // Get uploaded file
+$request->input('name');   // Get specific field
 ```
 
 ### Inline Validation
-The `validate` method returns only the validated data or throws a 422 error:
 ```php
 $data = $request->validate([
     'email' => 'required|email',
@@ -129,85 +120,35 @@ Phantom includes a **Compiled Template Engine** (Blade-like) that caches views i
 
 ### Syntax
 *   **Echo**: `{{ $var }}` (Escaped) or `{!! $var !!}` (Raw).
-*   **Directives**: `@if($cond)`, `@else`, `@endif`, `@foreach($items as $item)`.
-*   **Inclusion**: `@include('partials.nav')`.
-
-### Layouts & Inheritance
-**layouts/master.php**
-```html
-<html>
-    <body>
-        <nav>...</nav>
-        @yield('content')
-    </body>
-</html>
-```
-
-**home.php**
-```php
-@extends('layouts.master')
-
-@section('content')
-    <h1>Welcome to Phantom</h1>
-@endsection
-```
+*   **Directives**: `@if`, `@foreach`, `@include`, `@extends`, `@section`, `@yield`.
+*   **Authorization**: `@can('update', $post) ... @endcan`.
 
 ---
 
 <a name="orm"></a>
 ## 6. ORM (Database)
 
-The Phantom ORM is a fluent Active Record implementation.
-
 <a name="orm-basic"></a>
 ### Basic Usage
 ```php
 $users = User::all(); // Returns a Collection
 $user = User::find(1);
-$user->name = 'New Name';
 $user->save();
-```
-
-### Eager Loading
-Avoid the N+1 problem by pre-loading relationships:
-```php
-$posts = Post::with('user', 'comments')->get();
 ```
 
 <a name="orm-relationships"></a>
 ### Relationships
-*   **One to One**: `return $this->hasOne(Profile::class);`
 *   **One to Many**: `return $this->hasMany(Comment::class);`
 *   **Belongs To**: `return $this->belongsTo(User::class);`
 
-<a name="orm-polymorphism"></a>
-### Polymorphism
-Perfect for comments or images shared across models:
-```php
-// In Comment model
-public function commentable() {
-    return $this->morphTo();
-}
-
-// In Post model
-public function comments() {
-    return $this->morphMany(Comment::class, 'commentable');
-}
-```
-
 <a name="orm-soft-deletes"></a>
 ### Soft Deletes
-Import the trait into your model:
 ```php
 use Phantom\Traits\SoftDeletes;
 
 class Post extends Model {
     use SoftDeletes;
 }
-
-$post->delete(); // Sets deleted_at
-Post::withTrashed()->get(); // Include deleted
-Post::onlyTrashed()->get(); // Only deleted
 ```
 
 ---
@@ -219,10 +160,7 @@ The `Collection` class provides a wrapper for arrays with functional methods.
 
 ```php
 $collection = User::all();
-
-$emails = $collection->filter(fn($u) => $u->active)
-                     ->map(fn($u) => $u->email)
-                     ->pluck('email');
+$emails = $collection->pluck('email');
 ```
 
 ---
@@ -230,23 +168,10 @@ $emails = $collection->filter(fn($u) => $u->active)
 <a name="api-resources"></a>
 ## 8. API Resources
 
-API Resources allow you to transform your models into JSON structures effortlessly.
+Transform your models into JSON structures effortlessly.
 
 ```php
-class UserResource extends JsonResource {
-    public function toArray() {
-        return [
-            'id' => $this->id,
-            'name' => strtoupper($this->name),
-            'joined' => $this->created_at
-        ];
-    }
-}
-
-// In controller
 return UserResource::make($user);
-// Or for lists
-return UserResource::collection(User::all());
 ```
 
 ---
@@ -257,15 +182,39 @@ return UserResource::collection(User::all());
 Phantom is built for TDD. Use `FeatureTestCase` to test your routes.
 
 ```php
-namespace Tests\Feature;
+$this->get('/api/users')->assertStatus(200)->assertJson(['status' => 'ok']);
+```
 
-use Tests\FeatureTestCase;
+---
 
-class UserTest extends FeatureTestCase {
-    public function test_api_returns_users() {
-        $this->get('/api/users')
-             ->assertStatus(200)
-             ->assertJson(['status' => 'success']);
+<a name="real-time"></a>
+## 10. Real-Time Communication
+
+<a name="sse"></a>
+### Server-Sent Events (SSE)
+SSE allows you to stream data from the server to the client over HTTP.
+
+```php
+// In a Controller
+return response()->stream(function($stream) {
+    while(true) {
+        $stream->event(['time' => date('H:i:s')], 'timer');
+        sleep(1);
+    }
+});
+```
+
+<a name="broadcasting"></a>
+### Event Broadcasting
+Broadcast your events to the client by implementing `ShouldBroadcast`.
+
+```php
+class OrderPlaced implements ShouldBroadcast {
+    public function broadcastOn() {
+        return ['orders'];
+    }
+    public function broadcastWith() {
+        return ['id' => $this->order->id];
     }
 }
 ```
@@ -273,24 +222,14 @@ class UserTest extends FeatureTestCase {
 ---
 
 <a name="cli"></a>
-## 10. Phantom CLI
-
-The `phantom` binary is your command center.
+## 11. Phantom CLI
 
 <a name="cli-generators"></a>
 ### Generator Commands
-*   `make:model`, `make:controller`, `make:migration`, `make:middleware`, `make:resource`, `make:view`, `make:seeder`.
-
-### Database Management
-*   `migrate`: Runs pending migrations and tracks them.
-*   `migrate:rollback`: Rolls back the last **batch** of migrations.
+*   `make:model`, `make:controller`, `make:migration`, `make:middleware`, `make:resource`, `make:command`.
 
 <a name="cli-tinker"></a>
 ### Phantom Tinker (REPL)
-Interact with your app in real-time:
 ```bash
 php phantom tinker
-phantom> $user = User::find(1);
-phantom> $user->name;
-=> 'Mario'
 ```

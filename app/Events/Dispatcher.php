@@ -37,6 +37,7 @@ class Dispatcher
     {
         // If an object is passed, use its class name as the event name
         if (is_object($event)) {
+            $this->broadcastEvent($event);
             $payload = $event;
             $event = get_class($event);
         }
@@ -48,6 +49,24 @@ class Dispatcher
         }
 
         return $responses;
+    }
+
+    /**
+     * Broadcast the event if it implements ShouldBroadcast.
+     * 
+     * @param object $event
+     * @return void
+     */
+    protected function broadcastEvent($event)
+    {
+        if ($event instanceof ShouldBroadcast && Container::getInstance()->has('broadcaster')) {
+            $broadcaster = Container::getInstance()->make('broadcaster');
+            $broadcaster->broadcast(
+                $event->broadcastOn(),
+                get_class($event),
+                $event->broadcastWith()
+            );
+        }
     }
 
     /**
