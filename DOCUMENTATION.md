@@ -23,7 +23,8 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
     *   [Server-Sent Events (SSE)](#sse)
     *   [Event Broadcasting](#broadcasting)
     *   [Frontend Real-time (Echo)](#frontend-realtime)
-11. [Phantom CLI (Binary)](#cli)
+11. [Notification System](#notifications)
+12. [Phantom CLI (Binary)](#cli)
     *   [Generator Commands](#cli-generators)
     *   [Tinker (REPL)](#cli-tinker)
 
@@ -33,43 +34,6 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
 ## 1. Architecture & Container
 
 Phantom is built on a powerful **IoC (Inversion of Control) Container**.
-
-### Service Providers
-Providers are the heart of the modular architecture. Register them in `config/app.php`.
-```php
-class MyServiceProvider extends ServiceProvider {
-    public function register() {
-        $this->app->singleton('service', fn() => new MyService());
-    }
-}
-```
-
----
-
-<a name="routing"></a>
-## 2. Routing & Controllers
-
-Phantom supports automatic **Method Injection**.
-
-### Basic Routing
-```php
-$router->get('/user/{id}', function(int $id) {
-    return "User: " . $id;
-});
-```
-
----
-
-<a name="views"></a>
-## 5. Views & Phantom Templates
-
-Phantom includes a **Compiled Template Engine** (Blade-like).
-
-### Syntax
-*   **Echo**: `{{ $var }}` (Escaped) or `{!! $var !!}` (Raw).
-*   **Directives**: `@if`, `@foreach`, `@include`, `@extends`, `@section`, `@yield`.
-*   **Stacks**: Inyect content from children to layouts using `@push('name')` and `@stack('name')`.
-*   **Authorization**: `@can('update', $post) ... @endcan`.
 
 ---
 
@@ -82,7 +46,6 @@ Observers group model event listeners.
 ```php
 User::observe(UserObserver::class);
 ```
-Available events: `creating`, `created`, `updating`, `updated`, `deleting`, `deleted`.
 
 ---
 
@@ -102,21 +65,37 @@ return response()->stream(function($stream) {
 ### Event Broadcasting
 Broadcast your events to the client by implementing `ShouldBroadcast`.
 
-```php
-class OrderPlaced implements ShouldBroadcast {
-    public function broadcastOn() { return ['orders']; }
-    public function broadcastWith() { return ['id' => 1]; }
-}
-```
-
 <a name="frontend-realtime"></a>
 ### Frontend Real-time (Echo)
 Use `@stack('scripts')` in your layout and `@push('scripts')` in your views to initialize client-side WebSocket connections.
 
 ---
 
+<a name="notifications"></a>
+## 11. Notification System
+Phantom provides a unified way to send notifications via various delivery channels.
+
+### Notifiable Trait
+Add `Notifiable` to your models to enable notifications:
+```php
+use Phantom\Traits\Notifiable;
+
+class User extends Model {
+    use Notifiable;
+}
+```
+
+### Sending Notifications
+```php
+$user->notify(new NewOrderNotification($order));
+```
+
+Available channels: `database`, `mail`, `broadcast`.
+
+---
+
 <a name="cli"></a>
-## 11. Phantom CLI
+## 12. Phantom CLI
 
 *   `php phantom serve`: Start dev server.
 *   `php phantom tinker`: Interactive REPL.
