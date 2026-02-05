@@ -45,5 +45,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('gate', function () {
             return new \Phantom\Security\Gate();
         });
+
+        $this->app->singleton('broadcaster', function () {
+            $config = config('broadcasting');
+            $driver = $config['connections'][$config['default']];
+
+            if ($config['default'] === 'pusher') {
+                return new \Phantom\Events\PusherBroadcaster($driver);
+            }
+
+            return new class extends \Phantom\Events\Broadcaster {
+                public function broadcast(array $channels, $event, array $payload = []) {}
+            };
+        });
     }
 }
