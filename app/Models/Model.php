@@ -3,6 +3,7 @@
 namespace Phantom\Models;
 
 use Phantom\Core\Container;
+use Phantom\Core\Collection;
 use JsonSerializable;
 
 abstract class Model implements JsonSerializable
@@ -38,7 +39,7 @@ abstract class Model implements JsonSerializable
                 if (!empty($models)) {
                     (new $this->class)->loadRelations($models, $this->with);
                 }
-                return $models;
+                return new Collection($models);
             }
             public function __call($method, $args) { 
                 $res = $this->query->$method(...$args); 
@@ -51,9 +52,7 @@ abstract class Model implements JsonSerializable
     {
         foreach ($relations as $relation) {
             if (method_exists($this, $relation)) {
-                $relObj = $this->$relation();
-                // Esta es una versión simplificada. En una versión completa 
-                // se usaría WHERE IN (...) para cargar todo de una vez.
+                // Pre-load for all models
                 foreach ($models as $model) {
                     $model->relations[$relation] = $model->$relation()->getResults();
                 }
@@ -70,7 +69,7 @@ abstract class Model implements JsonSerializable
     public static function all()
     {
         $results = static::query()->get();
-        return array_map(fn($attributes) => new static((array) $attributes), $results);
+        return new Collection(array_map(fn($attributes) => new static((array) $attributes), $results));
     }
 
     public static function find($id)
@@ -151,7 +150,7 @@ abstract class Model implements JsonSerializable
             public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
             public function getResults() { 
                 $results = $this->query->get();
-                return array_map(fn($attr) => new $this->related((array)$attr), $results);
+                return new Collection(array_map(fn($attr) => new $this->related((array)$attr), $results));
             }
             public function __call($method, $args) { return $this->query->$method(...$args); }
         };
@@ -205,7 +204,7 @@ abstract class Model implements JsonSerializable
             public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
             public function getResults() { 
                 $results = $this->query->get();
-                return array_map(fn($attr) => new $this->related((array)$attr), $results);
+                return new Collection(array_map(fn($attr) => new $this->related((array)$attr), $results));
             }
             public function __call($method, $args) { return $this->query->$method(...$args); }
         };
