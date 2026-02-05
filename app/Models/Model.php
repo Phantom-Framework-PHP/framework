@@ -10,11 +10,55 @@ abstract class Model implements JsonSerializable
     protected $table;
     protected $primaryKey = 'id';
     protected $attributes = [];
+    protected $relations = [];
     protected $exists = false;
 
     public function __construct(array $attributes = [])
     {
         $this->attributes = $attributes;
+    }
+
+    public static function with($relations)
+    {
+        $instance = new static;
+        $relations = is_array($relations) ? $relations : func_get_args();
+        
+        return new class($instance->query(), static::class, $relations) {
+            protected $query;
+            protected $class;
+            protected $with;
+            public function __construct($query, $class, $with) { 
+                $this->query = $query; 
+                $this->class = $class;
+                $this->with = $with;
+            }
+            public function get() {
+                $results = $this->query->get();
+                $models = array_map(fn($attr) => new $this->class((array)$attr), $results);
+                if (!empty($models)) {
+                    (new $this->class)->loadRelations($models, $this->with);
+                }
+                return $models;
+            }
+            public function __call($method, $args) { 
+                $res = $this->query->$method(...$args); 
+                return $res === $this->query ? $this : $res;
+            }
+        };
+    }
+
+    public function loadRelations(&$models, $relations)
+    {
+        foreach ($relations as $relation) {
+            if (method_exists($this, $relation)) {
+                $relObj = $this->$relation();
+                // Esta es una versión simplificada. En una versión completa 
+                // se usaría WHERE IN (...) para cargar todo de una vez.
+                foreach ($models as $model) {
+                    $model->relations[$relation] = $model->$relation()->getResults();
+                }
+            }
+        }
     }
 
     public static function query()
@@ -82,8 +126,14 @@ abstract class Model implements JsonSerializable
             return $this->attributes[$key];
         }
 
+        if (isset($this->relations[$key])) {
+            return $this->relations[$key];
+        }
+
         if (method_exists($this, $key)) {
-            return $this->$key()->getResults();
+            $result = $this->$key()->getResults();
+            $this->relations[$key] = $result; // Cache for next time
+            return $result;
         }
 
         return null;
