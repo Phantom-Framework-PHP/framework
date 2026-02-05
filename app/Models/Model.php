@@ -11,6 +11,10 @@ abstract class Model implements JsonSerializable
     protected $table;
     protected $primaryKey = 'id';
     protected $fillable = [];
+    protected $hidden = [];
+    protected $visible = [];
+    protected $appends = [];
+    public $timestamps = true;
     protected $attributes = [];
     protected $relations = [];
     protected $exists = false;
@@ -172,6 +176,25 @@ abstract class Model implements JsonSerializable
         return null;
     }
 
+    /**
+     * Find a model by its primary key or throw an exception.
+     *
+     * @param  mixed  $id
+     * @return static
+     *
+     * @throws \Exception
+     */
+    public static function findOrFail($id)
+    {
+        $result = static::find($id);
+
+        if (!$result) {
+            throw new \Exception("No query results for model [" . static::class . "] $id");
+        }
+
+        return $result;
+    }
+
     public static function where($column, $operator = null, $value = null)
     {
         return static::query()->where(...func_get_args());
@@ -190,6 +213,10 @@ abstract class Model implements JsonSerializable
     public function save()
     {
         $db = Container::getInstance()->make('db');
+
+        if ($this->timestamps) {
+            $this->updateTimestamps();
+        }
         
         if ($this->exists) {
             $this->fireModelEvent('updating');
@@ -206,6 +233,22 @@ abstract class Model implements JsonSerializable
         }
 
         return $this;
+    }
+
+    /**
+     * Update the creation and update timestamps.
+     *
+     * @return void
+     */
+    protected function updateTimestamps()
+    {
+        $time = date('Y-m-d H:i:s');
+
+        if (!$this->exists && !isset($this->attributes['created_at'])) {
+            $this->attributes['created_at'] = $time;
+        }
+
+        $this->attributes['updated_at'] = $time;
     }
 
     public function delete()
@@ -387,6 +430,22 @@ abstract class Model implements JsonSerializable
 
     public function jsonSerialize(): mixed
     {
-        return $this->attributes;
+        $attributes = $this->attributes;
+
+        // 1. Process Appends (Accessors)
+        foreach ($this->appends as $key) {
+            $attributes[$key] = $this->$key;
+        }
+
+        // 2. Handle Visible/Hidden
+        if (!empty($this->visible)) {
+            return array_intersect_key($attributes, array_flip($this->visible));
+        }
+
+        if (!empty($this->hidden)) {
+            return array_diff_key($attributes, array_flip($this->hidden));
+        }
+
+        return $attributes;
     }
 }
