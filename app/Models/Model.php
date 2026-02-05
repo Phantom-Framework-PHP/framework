@@ -193,6 +193,55 @@ abstract class Model implements JsonSerializable
         };
     }
 
+    public function morphMany($related, $name)
+    {
+        $instance = new $related;
+        $type = $name . '_type';
+        $id = $name . '_id';
+
+        return new class($instance->query()->where($type, static::class)->where($id, $this->{$this->primaryKey}), $related) {
+            protected $query;
+            protected $related;
+            public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
+            public function getResults() { 
+                $results = $this->query->get();
+                return array_map(fn($attr) => new $this->related((array)$attr), $results);
+            }
+            public function __call($method, $args) { return $this->query->$method(...$args); }
+        };
+    }
+
+    public function morphTo($name = null)
+    {
+        // Si no se pasa nombre, intentamos adivinarlo por el nombre del método (caller)
+        if (!$name) {
+            $name = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
+        }
+
+        $typeField = $name . '_type';
+        $idField = $name . '_id';
+
+        $type = $this->$typeField;
+        $id = $this->$idField;
+
+        if (!$type || !$id) {
+            return new class { public function getResults() { return null; } };
+        }
+
+        $instance = new $type;
+
+        return new class($instance->query()->where($instance->primaryKey, $id), $type) {
+            protected $query;
+            protected $type;
+            public function __construct($query, $type) { $this->query = $query; $this->type = $type; }
+            public function getResults() { 
+                $result = $this->query->first();
+                return $result ? new $this->type((array)$result) : null;
+            }
+            public function __call($method, $args) { return $this->query->$method(...$args); }
+        };
+    }
+
     protected function getForeignKey()
     {
         return strtolower((new \ReflectionClass($this))->getShortName()) . '_id';
