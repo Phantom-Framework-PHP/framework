@@ -17,19 +17,20 @@ if ($command === 'list') {
     echo "Available commands:\n";
     echo "  list                List available commands\n";
     echo "  version             Display version\n";
+    echo "  serve               Start the development server\n";
+    echo "  tinker              Interactive shell (REPL)\n";
     echo "  migrate             Run database migrations\n";
     echo "  migrate:rollback    Rollback the last database migration\n";
     echo "  db:seed             Seed the database with records\n";
-    echo "  make:migration      Create a new migration file\n";
     echo "  make:model          Create a new model class\n";
     echo "  make:controller     Create a new controller class\n";
+    echo "  make:migration      Create a new migration file\n";
     echo "  make:view           Create a new view file\n";
     echo "  make:seeder         Create a new seeder class\n";
     echo "  make:middleware     Create a new middleware class\n";
     echo "  make:resource       Create a new API resource class\n";
+    echo "  make:observer       Create a new model observer class\n";
     echo "  make:command        Create a new custom CLI command\n";
-    echo "  serve               Start the development server\n";
-    echo "  tinker              Interactive shell (REPL)\n";
 
     // Custom Commands scan
     $commandsPath = __DIR__ . '/app/Console/Commands';
@@ -49,88 +50,6 @@ if ($command === 'list') {
 
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
-
-} elseif ($command === 'make:command') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Command name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/app/Console/Commands/{$name}.php";
-    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
-
-    if (file_exists($path)) {
-        echo "Error: Command already exists!\n";
-        exit(1);
-    }
-
-    $stub = "<?php\n\nnamespace App\Console\Commands;\n\nclass {$name}\n{\n    public \$signature = 'command:name';\n    public \$description = 'Command description';\n\n    public function handle()\n    {\n        echo \"Hello from custom command!\";\n    }\n}\n";
-    file_put_contents($path, $stub);
-    echo "Created Command: app/Console/Commands/{$name}.php\n";
-
-} elseif ($command === 'make:seeder') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Seeder name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/database/seeders/{$name}.php";
-    if (file_exists($path)) {
-        echo "Error: Seeder already exists!\n";
-        exit(1);
-    }
-
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/seeder.stub');
-    $content = str_replace('{{class}}', $name, $stub);
-
-    file_contents($path, $content);
-    echo "Created Seeder: database/seeders/{$name}.php\n";
-
-} elseif ($command === 'make:middleware') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Middleware name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/app/Http/Middlewares/{$name}.php";
-    if (file_exists($path)) {
-        echo "Error: Middleware already exists!\n";
-        exit(1);
-    }
-
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/middleware.stub');
-    $content = str_replace('{{class}}', $name, $stub);
-
-    file_put_contents($path, $content);
-    echo "Created Middleware: app/Http/Middlewares/{$name}.php\n";
-
-} elseif ($command === 'make:resource') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Resource name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/app/Http/Resources/{$name}.php";
-    
-    $directory = dirname($path);
-    if (!file_exists($directory)) {
-        mkdir($directory, 0755, true);
-    }
-
-    if (file_exists($path)) {
-        echo "Error: Resource already exists!\n";
-        exit(1);
-    }
-
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/resource.stub');
-    $content = str_replace('{{class}}', $name, $stub);
-
-    file_put_contents($path, $content);
-    echo "Created Resource: app/Http/Resources/{$name}.php\n";
 
 } elseif ($command === 'serve') {
     $port = $args[1] ?? 8000;
@@ -158,21 +77,10 @@ if ($command === 'list') {
         }
 
         $input = trim($input);
+        if ($input === 'exit' || $input === 'quit') break;
+        if (empty($input)) continue;
 
-        if ($input === 'exit' || $input === 'quit') {
-            break;
-        }
-
-        if (empty($input)) {
-            continue;
-        }
-
-        // Ensure statement ends with semicolon
-        if (!str_ends_with($input, ';') && !str_ends_with($input, '}')) {
-            $input .= ';';
-        }
-
-        // Wrap with return if it's an expression to show the result
+        if (!str_ends_with($input, ';') && !str_ends_with($input, '}')) $input .= ';';
         if (!str_starts_with($input, 'echo') && !str_starts_with($input, 'print') && !str_contains($input, ';')) {
             $input = "return " . $input;
         }
@@ -181,19 +89,155 @@ if ($command === 'list') {
             ob_start();
             $result = eval($input);
             $output = ob_get_clean();
-
-            if ($output) {
-                echo $output . "\n";
-            }
-
-            if ($result !== null) {
-                echo "=> " . var_export($result, true) . "\n";
-            }
+            if ($output) echo $output . "\n";
+            if ($result !== null) echo "=> " . var_export($result, true) . "\n";
         } catch (Throwable $e) {
             ob_end_clean();
             echo "Error: " . $e->getMessage() . "\n";
         }
     }
+
+} elseif ($command === 'make:model') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Model name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Models/{$name}.php";
+    if (file_exists($path)) { echo "Error: Model already exists!\n"; exit(1); }
+    $table = strtolower($name) . 's';
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/model.stub');
+    $content = str_replace(['{{class}}', '{{table}}'], [$name, $table], $stub);
+    $content = str_replace('namespace App\Models;', 'namespace Phantom\Models;', $content);
+    file_put_contents($path, $content);
+    echo "Created Model: app/Models/{$name}.php\n";
+
+} elseif ($command === 'make:controller') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Controller name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Http/Controllers/{$name}.php";
+    if (file_exists($path)) { echo "Error: Controller already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/controller.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+    file_put_contents($path, $content);
+    echo "Created Controller: app/Http/Controllers/{$name}.php\n";
+
+} elseif ($command === 'make:migration') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Migration name required.\n"; exit(1); }
+    $timestamp = date('Y_m_d_His');
+    $fileName = "{$timestamp}_{$name}.php";
+    $path = __DIR__ . "/database/migrations/{$fileName}";
+    $table = 'table_name';
+    if (preg_match('/create_(.*)_table/', $name, $matches)) $table = $matches[1];
+    elseif (preg_match('/(?:add|remove|update)_.*_to_(.*)_table/', $name, $matches)) $table = $matches[1];
+    try {
+        $stubPath = __DIR__ . '/app/Console/Stubs/migration.stub';
+        $stub = file_get_contents($stubPath);
+        $content = str_replace('{{table}}', $table, $stub);
+        file_put_contents($path, $content);
+        echo "Created Migration: database/migrations/{$fileName}\n";
+    } catch (Exception $e) { echo "Error: " . $e->getMessage() . "\n"; exit(1); }
+
+} elseif ($command === 'make:view') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: View name required.\n"; exit(1); }
+    $viewPath = str_replace('.', '/', $name);
+    $path = __DIR__ . "/resources/views/{$viewPath}.php";
+    $directory = dirname($path);
+    if (!file_exists($directory)) mkdir($directory, 0755, true);
+    if (file_exists($path)) { echo "Error: View already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/view.stub');
+    $content = str_replace('{{title}}', ucfirst(str_replace(['.', '_', '/'], ' ', $name)), $stub);
+    file_put_contents($path, $content);
+    echo "Created View: resources/views/{$viewPath}.php\n";
+
+} elseif ($command === 'make:seeder') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Seeder name required.\n"; exit(1); }
+    $path = __DIR__ . "/database/seeders/{$name}.php";
+    if (file_exists($path)) { echo "Error: Seeder already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/seeder.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+    file_put_contents($path, $content);
+    echo "Created Seeder: database/seeders/{$name}.php\n";
+
+} elseif ($command === 'make:middleware') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Middleware name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Http/Middlewares/{$name}.php";
+    if (file_exists($path)) { echo "Error: Middleware already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/middleware.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+    file_put_contents($path, $content);
+    echo "Created Middleware: app/Http/Middlewares/{$name}.php\n";
+
+} elseif ($command === 'make:resource') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Resource name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Http/Resources/{$name}.php";
+    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+    if (file_exists($path)) { echo "Error: Resource already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/resource.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+    file_put_contents($path, $content);
+    echo "Created Resource: app/Http/Resources/{$name}.php\n";
+
+} elseif ($command === 'make:observer') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Observer name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Observers/{$name}.php";
+    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+    if (file_exists($path)) { echo "Error: Observer already exists!\n"; exit(1); }
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/observer.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+    file_put_contents($path, $content);
+    echo "Created Observer: app/Observers/{$name}.php\n";
+
+} elseif ($command === 'make:command') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Command name required.\n"; exit(1); }
+    $path = __DIR__ . "/app/Console/Commands/{$name}.php";
+    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+    if (file_exists($path)) { echo "Error: Command already exists!\n"; exit(1); }
+    $stub = "<?php\n\nnamespace App\Console\Commands;\n\nclass {$name}\n{\n    public \$signature = 'command:name';\n    public \$description = 'Command description';\n\n    public function handle()\n    {\n        echo \"Hello from custom command!\";\n    }\n}\n";
+    file_put_contents($path, $stub);
+    echo "Created Command: app/Console/Commands/{$name}.php\n";
+
+} elseif ($command === 'migrate') {
+    echo "Running migrations...\n";
+    $db = $app->make('db');
+    $db->query("CREATE TABLE IF NOT EXISTS migrations (id INT AUTO_INCREMENT PRIMARY KEY, migration VARCHAR(255), batch INT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $executed = $db->select("SELECT migration FROM migrations");
+    $executedFiles = array_column($executed, 'migration');
+    $batch = ($db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0) + 1;
+    $files = glob(__DIR__ . '/database/migrations/*.php');
+    $count = 0;
+    foreach ($files as $file) {
+        $name = basename($file, '.php');
+        if (!in_array($name, $executedFiles)) {
+            $migration = require $file;
+            $migration->up();
+            $db->query("INSERT INTO migrations (migration, batch) VALUES (?, ?)", [$name, $batch]);
+            echo "Migrated: " . $name . "\n";
+            $count++;
+        }
+    }
+    echo $count === 0 ? "Nothing to migrate.\n" : "Successfully migrated {$count} files.\n";
+
+} elseif ($command === 'migrate:rollback') {
+    echo "Rolling back last batch of migrations...\n";
+    $db = $app->make('db');
+    $lastBatch = $db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0;
+    if ($lastBatch === 0) { echo "Nothing to rollback.\n"; exit; }
+    $migrations = $db->select("SELECT migration FROM migrations WHERE batch = ? ORDER BY id DESC", [$lastBatch]);
+    foreach ($migrations as $m) {
+        $file = __DIR__ . "/database/migrations/{$m->migration}.php";
+        if (file_exists($file)) {
+            $migration = require $file;
+            $migration->down();
+            $db->query("DELETE FROM migrations WHERE migration = ?", [$m->migration]);
+            echo "Rolled back: " . $m->migration . "\n";
+        }
+    }
+    echo "Rollback of batch {$lastBatch} completed.\n";
 
 } elseif ($command === 'db:seed') {
     echo "Seeding database...\n";
@@ -209,164 +253,6 @@ if ($command === 'list') {
     }
     echo "Database seeding completed.\n";
 
-} elseif ($command === 'make:view') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: View name required.\n";
-        exit(1);
-    }
-
-    $viewPath = str_replace('.', '/', $name);
-    $path = __DIR__ . "/resources/views/{$viewPath}.php";
-    
-    $directory = dirname($path);
-    if (!file_exists($directory)) {
-        mkdir($directory, 0755, true);
-    }
-
-    if (file_exists($path)) {
-        echo "Error: View already exists!\n";
-        exit(1);
-    }
-
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/view.stub');
-    $content = str_replace('{{title}}', ucfirst(str_replace(['.', '_', '/'], ' ', $name)), $stub);
-
-    file_put_contents($path, $content);
-    echo "Created View: resources/views/{$viewPath}.php\n";
-
-} elseif ($command === 'make:controller') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Controller name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/app/Http/Controllers/{$name}.php";
-    if (file_exists($path)) {
-        echo "Error: Controller already exists!\n";
-        exit(1);
-    }
-
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/controller.stub');
-    $content = str_replace('{{class}}', $name, $stub);
-
-    file_put_contents($path, $content);
-    echo "Created Controller: app/Http/Controllers/{$name}.php\n";
-
-} elseif ($command === 'make:model') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Model name required.\n";
-        exit(1);
-    }
-
-    $path = __DIR__ . "/app/Models/{$name}.php";
-    if (file_exists($path)) {
-        echo "Error: Model already exists!\n";
-        exit(1);
-    }
-
-    $table = strtolower($name) . 's'; // Basic pluralization
-    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/model.stub');
-    $content = str_replace(['{{class}}', '{{table}}'], [$name, $table], $stub);
-    $content = str_replace('namespace App\Models;', 'namespace Phantom\Models;', $content);
-
-    file_put_contents($path, $content);
-    echo "Created Model: app/Models/{$name}.php\n";
-
-} elseif ($command === 'make:migration') {
-    $name = $args[1] ?? null;
-    if (!$name) {
-        echo "Error: Migration name required. Example: php phantom make:migration create_users_table\n";
-        exit(1);
-    }
-
-    $timestamp = date('Y_m_d_His');
-    $fileName = "{$timestamp}_{$name}.php";
-    $path = __DIR__ . "/database/migrations/{$fileName}";
-
-    $table = 'table_name';
-    if (preg_match('/create_(.*)_table/', $name, $matches)) {
-        $table = $matches[1];
-    } elseif (preg_match('/(?:add|remove|update)_.*_to_(.*)_table/', $name, $matches)) {
-        $table = $matches[1];
-    }
-
-    try {
-        $stubPath = __DIR__ . '/app/Console/Stubs/migration.stub';
-        if (!file_exists($stubPath)) {
-            throw new Exception("Migration stub not found at {$stubPath}");
-        }
-        $stub = file_get_contents($stubPath);
-        $content = str_replace('{{table}}', $table, $stub);
-
-        file_put_contents($path, $content);
-        echo "Created Migration: database/migrations/{$fileName}\n";
-    } catch (Exception $e) {
-        echo "Error creating migration: " . $e->getMessage() . "\n";
-        exit(1);
-    }
-
-} elseif ($command === 'migrate') {
-    echo "Running migrations...\n";
-    $db = $app->make('db');
-    
-    // Ensure migrations table exists
-    $db->query("CREATE TABLE IF NOT EXISTS migrations (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        migration VARCHAR(255),
-        batch INT
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    $executed = $db->select("SELECT migration FROM migrations");
-    $executedFiles = array_column($executed, 'migration');
-    
-    $batch = ($db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0) + 1;
-    $files = glob(__DIR__ . '/database/migrations/*.php');
-    $count = 0;
-
-    foreach ($files as $file) {
-        $name = basename($file, '.php');
-        if (!in_array($name, $executedFiles)) {
-            $migration = require $file;
-            $migration->up();
-            
-            $db->query("INSERT INTO migrations (migration, batch) VALUES (?, ?)", [$name, $batch]);
-            echo "Migrated: " . $name . "\n";
-            $count++;
-        }
-    }
-
-    if ($count === 0) {
-        echo "Nothing to migrate.\n";
-    } else {
-        echo "Successfully migrated {$count} files.\n";
-    }
-
-} elseif ($command === 'migrate:rollback') {
-    echo "Rolling back last batch of migrations...\n";
-    $db = $app->make('db');
-    
-    $lastBatch = $db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0;
-
-    if ($lastBatch === 0) {
-        echo "Nothing to rollback.\n";
-        exit;
-    }
-
-    $migrations = $db->select("SELECT migration FROM migrations WHERE batch = ? ORDER BY id DESC", [$lastBatch]);
-
-    foreach ($migrations as $m) {
-        $file = __DIR__ . "/database/migrations/{$m->migration}.php";
-        if (file_exists($file)) {
-            $migration = require $file;
-            $migration->down();
-            $db->query("DELETE FROM migrations WHERE migration = ?", [$m->migration]);
-            echo "Rolled back: " . $m->migration . "\n";
-        }
-    }
-    echo "Rollback of batch {$lastBatch} completed.\n";
 } else {
     echo "Unknown command: {$command}\n";
 }

@@ -21,8 +21,10 @@ trait SoftDeletes
      */
     public function delete()
     {
+        $this->fireModelEvent('deleting');
         $this->attributes['deleted_at'] = date('Y-m-d H:i:s');
         $this->save();
+        $this->fireModelEvent('deleted');
     }
 
     /**

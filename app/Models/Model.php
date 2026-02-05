@@ -14,9 +14,39 @@ abstract class Model implements JsonSerializable
     protected $relations = [];
     protected $exists = false;
 
+    /**
+     * The registered observers.
+     *
+     * @var array
+     */
+    protected static $observers = [];
+
     public function __construct(array $attributes = [])
     {
         $this->attributes = $attributes;
+    }
+
+    /**
+     * Register an observer for the model.
+     *
+     * @param  string  $class
+     * @return void
+     */
+    public static function observe($class)
+    {
+        static::$observers[static::class][] = $class;
+    }
+
+    protected function fireModelEvent($event)
+    {
+        $observers = static::$observers[static::class] ?? [];
+
+        foreach ($observers as $observerClass) {
+            $observer = Container::getInstance()->make($observerClass);
+            if (method_exists($observer, $event)) {
+                $observer->$event($this);
+            }
+        }
     }
 
     public static function with($relations)
@@ -115,16 +145,33 @@ abstract class Model implements JsonSerializable
         $db = Container::getInstance()->make('db');
         
         if ($this->exists) {
+            $this->fireModelEvent('updating');
             $db->table($this->getTable())
                 ->where($this->primaryKey, $this->attributes[$this->primaryKey])
                 ->update($this->attributes);
+            $this->fireModelEvent('updated');
         } else {
+            $this->fireModelEvent('creating');
             $db->table($this->getTable())->insert($this->attributes);
             $this->attributes[$this->primaryKey] = $db->getPdo()->lastInsertId();
             $this->exists = true;
+            $this->fireModelEvent('created');
         }
 
         return $this;
+    }
+
+    public function delete()
+    {
+        $this->fireModelEvent('deleting');
+        
+        $db = Container::getInstance()->make('db');
+        $db->table($this->getTable())
+            ->where($this->primaryKey, $this->attributes[$this->primaryKey])
+            ->delete();
+
+        $this->fireModelEvent('deleted');
+        return true;
     }
 
     public function getTable()
