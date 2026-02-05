@@ -101,7 +101,7 @@ if (! function_exists('view')) {
      */
     function view($view, $data = [])
     {
-        return \Phantom\View\View::make($view, $data);
+        return \Phantom\View\View::make($view, $data)->render();
     }
 }
 
