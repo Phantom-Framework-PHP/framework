@@ -120,7 +120,7 @@ class Builder
     {
         $this->limit(1);
         $results = $this->get();
-        return $results[0] ?? null;
+        return $results->first();
     }
 
     public function count()

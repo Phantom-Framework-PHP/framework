@@ -10,6 +10,7 @@ abstract class Model implements JsonSerializable
 {
     protected $table;
     protected $primaryKey = 'id';
+    protected $fillable = [];
     protected $attributes = [];
     protected $relations = [];
     protected $exists = false;
@@ -23,7 +24,53 @@ abstract class Model implements JsonSerializable
 
     public function __construct(array $attributes = [])
     {
-        $this->attributes = $attributes;
+        $this->fill($attributes);
+    }
+
+    /**
+     * Fill the model with an array of attributes.
+     *
+     * @param  array  $attributes
+     * @return $this
+     */
+    public function fill(array $attributes)
+    {
+        foreach ($attributes as $key => $value) {
+            if ($this->isFillable($key)) {
+                $this->$key = $value;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Determine if the given attribute may be mass assigned.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    protected function isFillable($key)
+    {
+        if (empty($this->fillable)) {
+            return true;
+        }
+
+        return in_array($key, $this->fillable);
+    }
+
+    /**
+     * Save a new model and return the instance.
+     *
+     * @param  array  $attributes
+     * @return static
+     */
+    public static function create(array $attributes)
+    {
+        $model = new static($attributes);
+        $model->save();
+
+        return $model;
     }
 
     /**
