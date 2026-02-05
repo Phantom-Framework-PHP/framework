@@ -161,24 +161,63 @@ if ($command === 'list') {
 
 } elseif ($command === 'migrate') {
     echo "Running migrations...\n";
+    $db = $app->make('db');
+    
+    // Ensure migrations table exists
+    $db->query("CREATE TABLE IF NOT EXISTS migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        migration VARCHAR(255),
+        batch INT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $executed = $db->select("SELECT migration FROM migrations");
+    $executedFiles = array_column($executed, 'migration');
+    
+    $batch = ($db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0) + 1;
     $files = glob(__DIR__ . '/database/migrations/*.php');
+    $count = 0;
+
     foreach ($files as $file) {
-        $migration = require $file;
-        $migration->up();
-        echo "Migrated: " . basename($file) . "\n";
+        $name = basename($file, '.php');
+        if (!in_array($name, $executedFiles)) {
+            $migration = require $file;
+            $migration->up();
+            
+            $db->query("INSERT INTO migrations (migration, batch) VALUES (?, ?)", [$name, $batch]);
+            echo "Migrated: " . $name . "\n";
+            $count++;
+        }
     }
-    echo "All migrations completed.\n";
+
+    if ($count === 0) {
+        echo "Nothing to migrate.\n";
+    } else {
+        echo "Successfully migrated {$count} files.\n";
+    }
 
 } elseif ($command === 'migrate:rollback') {
-    echo "Rolling back migrations...\n";
-    $files = glob(__DIR__ . '/database/migrations/*.php');
-    rsort($files); // Rollback in reverse order
-    foreach ($files as $file) {
-        $migration = require $file;
-        $migration->down();
-        echo "Rolled back: " . basename($file) . "\n";
+    echo "Rolling back last batch of migrations...\n";
+    $db = $app->make('db');
+    
+    $lastBatch = $db->select("SELECT MAX(batch) as max_batch FROM migrations")[0]->max_batch ?? 0;
+
+    if ($lastBatch === 0) {
+        echo "Nothing to rollback.\n";
+        exit;
     }
-    echo "Rollback completed.\n";
+
+    $migrations = $db->select("SELECT migration FROM migrations WHERE batch = ? ORDER BY id DESC", [$lastBatch]);
+
+    foreach ($migrations as $m) {
+        $file = __DIR__ . "/database/migrations/{$m->migration}.php";
+        if (file_exists($file)) {
+            $migration = require $file;
+            $migration->down();
+            $db->query("DELETE FROM migrations WHERE migration = ?", [$m->migration]);
+            echo "Rolled back: " . $m->migration . "\n";
+        }
+    }
+    echo "Rollback of batch {$lastBatch} completed.\n";
 } else {
     echo "Unknown command: {$command}\n";
 }
