@@ -78,7 +78,74 @@ abstract class Model implements JsonSerializable
 
     public function __get($key)
     {
-        return $this->attributes[$key] ?? null;
+        if (isset($this->attributes[$key])) {
+            return $this->attributes[$key];
+        }
+
+        if (method_exists($this, $key)) {
+            return $this->$key()->getResults();
+        }
+
+        return null;
+    }
+
+    public function hasMany($related, $foreignKey = null, $localKey = null)
+    {
+        $instance = new $related;
+        $foreignKey = $foreignKey ?: $this->getForeignKey();
+        $localKey = $localKey ?: $this->primaryKey;
+
+        return new class($instance->query()->where($foreignKey, $this->$localKey), $related) {
+            protected $query;
+            protected $related;
+            public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
+            public function getResults() { 
+                $results = $this->query->get();
+                return array_map(fn($attr) => new $this->related((array)$attr), $results);
+            }
+            public function __call($method, $args) { return $this->query->$method(...$args); }
+        };
+    }
+
+    public function hasOne($related, $foreignKey = null, $localKey = null)
+    {
+        $instance = new $related;
+        $foreignKey = $foreignKey ?: $this->getForeignKey();
+        $localKey = $localKey ?: $this->primaryKey;
+
+        return new class($instance->query()->where($foreignKey, $this->$localKey), $related) {
+            protected $query;
+            protected $related;
+            public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
+            public function getResults() { 
+                $result = $this->query->first();
+                return $result ? new $this->related((array)$result) : null;
+            }
+            public function __call($method, $args) { return $this->query->$method(...$args); }
+        };
+    }
+
+    public function belongsTo($related, $foreignKey = null, $ownerKey = null)
+    {
+        $instance = new $related;
+        $ownerKey = $ownerKey ?: $instance->primaryKey;
+        $foreignKey = $foreignKey ?: strtolower((new \ReflectionClass($instance))->getShortName()) . '_id';
+
+        return new class($instance->query()->where($ownerKey, $this->$foreignKey), $related) {
+            protected $query;
+            protected $related;
+            public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
+            public function getResults() { 
+                $result = $this->query->first();
+                return $result ? new $this->related((array)$result) : null;
+            }
+            public function __call($method, $args) { return $this->query->$method(...$args); }
+        };
+    }
+
+    protected function getForeignKey()
+    {
+        return strtolower((new \ReflectionClass($this))->getShortName()) . '_id';
     }
 
     public function __set($key, $value)
