@@ -88,6 +88,19 @@ class Response
     }
 
     /**
+     * Create a new streamed response instance.
+     *
+     * @param  callable  $callback
+     * @param  int  $status
+     * @param  array  $headers
+     * @return StreamResponse
+     */
+    public static function stream(callable $callback, $status = 200, array $headers = [])
+    {
+        return new StreamResponse($callback, $status, $headers);
+    }
+
+    /**
      * Send the response to the browser.
      *
      * @return void
