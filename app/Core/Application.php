@@ -9,7 +9,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.10.5';
+    const VERSION = '1.11.5';
 
     /**
      * The base path for the Phantom installation.
@@ -17,6 +17,13 @@ class Application extends Container
      * @var string
      */
     protected $basePath;
+
+    /**
+     * The registered service providers.
+     *
+     * @var array
+     */
+    protected $serviceProviders = [];
 
     /**
      * Create a new Phantom application instance.
@@ -34,6 +41,7 @@ class Application extends Container
         $this->registerErrorHandlers();
         $this->loadEnvironment();
         $this->loadConfiguration();
+        $this->registerConfiguredProviders();
     }
 
     /**
@@ -107,60 +115,45 @@ class Application extends Container
             $config->load($this->basePath . '/config');
             return $config;
         });
+    }
 
-        // Register Database Service
-        $this->singleton('db', function () {
-            return new \Phantom\Database\Database(config('database'));
-        });
+    /**
+     * Register the configured service providers.
+     *
+     * @return void
+     */
+    protected function registerConfiguredProviders()
+    {
+        $providers = config('app.providers', [
+            // List of default providers if config is missing
+        ]);
 
-        // Register Session Service
-        $this->singleton('session', function () {
-            return new \Phantom\Session\Session();
-        });
-
-        // Register Auth Service
-        $this->singleton('auth', function () {
-            return new \Phantom\Auth\AuthManager($this->make('session'));
-        });
-
-        // Register Translator Service
-        $this->singleton('translator', function () {
-            return new Translator(
-                $this->basePath . '/lang',
-                config('app.locale', 'en'),
-                config('app.fallback_locale', 'en')
-            );
-        });
-
-        // Register Cache Service
-        $this->singleton('cache', function () {
-            return new \Phantom\Cache\CacheManager();
-        });
-
-        // Register Event Service
-        $this->singleton('events', function () {
-            return new \Phantom\Events\Dispatcher();
-        });
-
-        // Register Queue Service
-        $this->singleton('queue', function () {
-            return new \Phantom\Queues\QueueManager();
-        });
-
-        // Register Storage Service
-        $this->singleton('storage', function () {
-            return new \Phantom\Storage\StorageManager();
-        });
-
-        // Register Mail Service
-        $this->singleton('mail', function () {
-            return new \Phantom\Mail\MailManager();
-        });
-        
-        // Auto-start session for MVP (Should be middleware later)
-        if (config('session.driver') === 'file') {
-            $this->make('session')->start();
+        foreach ($providers as $provider) {
+            $this->register($provider);
         }
+    }
+
+    /**
+     * Register a service provider with the application.
+     *
+     * @param  string|ServiceProvider  $provider
+     * @return ServiceProvider
+     */
+    public function register($provider)
+    {
+        if (is_string($provider)) {
+            $provider = new $provider($this);
+        }
+
+        $provider->register();
+
+        $this->serviceProviders[] = $provider;
+
+        if ($this->booted) {
+            $provider->boot();
+        }
+
+        return $provider;
     }
     
     /**
@@ -196,6 +189,11 @@ class Application extends Container
     {
         if ($this->booted) {
             return;
+        }
+
+        // Boot all registered providers
+        foreach ($this->serviceProviders as $provider) {
+            $provider->boot();
         }
 
         // Load routes

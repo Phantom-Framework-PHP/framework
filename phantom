@@ -27,10 +27,48 @@ if ($command === 'list') {
     echo "  make:seeder         Create a new seeder class\n";
     echo "  make:middleware     Create a new middleware class\n";
     echo "  make:resource       Create a new API resource class\n";
+    echo "  make:command        Create a new custom CLI command\n";
     echo "  serve               Start the development server\n";
     echo "  tinker              Interactive shell (REPL)\n";
+
+    // Custom Commands scan
+    $commandsPath = __DIR__ . '/app/Console/Commands';
+    if (file_exists($commandsPath)) {
+        $files = glob($commandsPath . '/*.php');
+        foreach ($files as $file) {
+            require_once $file;
+            $className = "App\\Console\\Commands\\" . basename($file, '.php');
+            if (class_exists($className)) {
+                $instance = new $className();
+                if (property_exists($instance, 'signature')) {
+                    echo "  " . str_pad($instance->signature, 20) . ($instance->description ?? '') . "\n";
+                }
+            }
+        }
+    }
+
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
+
+} elseif ($command === 'make:command') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Command name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/app/Console/Commands/{$name}.php";
+    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+
+    if (file_exists($path)) {
+        echo "Error: Command already exists!\n";
+        exit(1);
+    }
+
+    $stub = "<?php\n\nnamespace App\Console\Commands;\n\nclass {$name}\n{\n    public \$signature = 'command:name';\n    public \$description = 'Command description';\n\n    public function handle()\n    {\n        echo \"Hello from custom command!\";\n    }\n}\n";
+    file_put_contents($path, $stub);
+    echo "Created Command: app/Console/Commands/{$name}.php\n";
+
 } elseif ($command === 'make:seeder') {
     $name = $args[1] ?? null;
     if (!$name) {

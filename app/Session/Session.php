@@ -12,7 +12,6 @@ class Session
     public function start()
     {
         if (session_status() === PHP_SESSION_NONE) {
-            // Secure session settings
             ini_set('session.cookie_httponly', 1);
             ini_set('session.use_only_cookies', 1);
             
@@ -22,14 +21,13 @@ class Session
 
             session_start();
         }
+
+        // Age flash data
+        $this->ageFlashData();
     }
 
     /**
      * Get a key from the session.
-     *
-     * @param  string  $key
-     * @param  mixed   $default
-     * @return mixed
      */
     public function get($key, $default = null)
     {
@@ -38,10 +36,6 @@ class Session
 
     /**
      * Set a key in the session.
-     *
-     * @param  string  $key
-     * @param  mixed   $value
-     * @return void
      */
     public function put($key, $value)
     {
@@ -49,31 +43,38 @@ class Session
     }
 
     /**
-     * Remove a key from the session.
-     *
-     * @param  string  $key
-     * @return void
+     * Set a flash value in the session.
      */
+    public function flash($key, $value)
+    {
+        $this->put($key, $value);
+        $_SESSION['_flash']['new'][] = $key;
+    }
+
+    /**
+     * Remove aged flash data.
+     */
+    protected function ageFlashData()
+    {
+        $old = $_SESSION['_flash']['old'] ?? [];
+        foreach ($old as $key) {
+            $this->forget($key);
+        }
+
+        $_SESSION['_flash']['old'] = $_SESSION['_flash']['new'] ?? [];
+        $_SESSION['_flash']['new'] = [];
+    }
+
     public function forget($key)
     {
         unset($_SESSION[$key]);
     }
 
-    /**
-     * Clear all session data.
-     *
-     * @return void
-     */
     public function flush()
     {
         $_SESSION = [];
     }
 
-    /**
-     * Regenerate the session ID.
-     *
-     * @return bool
-     */
     public function regenerate()
     {
         return session_regenerate_id(true);

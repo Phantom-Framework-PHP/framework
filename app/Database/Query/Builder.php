@@ -15,10 +15,31 @@ class Builder
     protected $limit;
     protected $bindings = [];
     protected $useSoftDeletes = false;
+    protected $modelClass;
 
     public function __construct(Database $db)
     {
         $this->db = $db;
+    }
+
+    public function setModelClass($class)
+    {
+        $this->modelClass = $class;
+        return $this;
+    }
+
+    public function __call($method, $args)
+    {
+        if ($this->modelClass) {
+            $scopeMethod = 'scope' . ucfirst($method);
+            $instance = new $this->modelClass;
+            
+            if (method_exists($instance, $scopeMethod)) {
+                return $instance->$scopeMethod($this, ...$args) ?: $this;
+            }
+        }
+
+        throw new \Exception("Method [{$method}] does not exist on the query builder.");
     }
 
     public function useSoftDeletes($value = true)
@@ -90,7 +111,9 @@ class Builder
         }
 
         $sql = $this->toSql();
-        return $this->db->select($sql, $this->bindings);
+        $results = $this->db->select($sql, $this->bindings);
+        
+        return new \Phantom\Core\Collection($results);
     }
 
     public function first()

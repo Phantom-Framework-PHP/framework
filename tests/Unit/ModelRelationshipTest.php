@@ -55,8 +55,8 @@ class ModelRelationshipTest extends TestCase
         $posts = $user->posts;
 
         $this->assertCount(2, $posts);
-        $this->assertInstanceOf(Post::class, $posts[0]);
-        $this->assertEquals('Post 1', $posts[0]->title);
+        $this->assertInstanceOf(Post::class, $posts->first());
+        $this->assertEquals('Post 1', $posts->first()->title);
     }
 
     public function test_belongs_to_relationship()

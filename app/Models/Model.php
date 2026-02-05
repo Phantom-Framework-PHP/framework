@@ -34,12 +34,14 @@ abstract class Model implements JsonSerializable
                 $this->with = $with;
             }
             public function get() {
-                $results = $this->query->get();
-                $models = array_map(fn($attr) => new $this->class((array)$attr), $results);
-                if (!empty($models)) {
-                    (new $this->class)->loadRelations($models, $this->with);
+                $collection = $this->query->get();
+                $models = $collection->map(fn($attr) => new $this->class((array)$attr));
+                if ($models->count() > 0) {
+                    $modelsArray = iterator_to_array($models);
+                    (new $this->class)->loadRelations($modelsArray, $this->with);
+                    return new Collection($modelsArray);
                 }
-                return new Collection($models);
+                return $models;
             }
             public function __call($method, $args) { 
                 $res = $this->query->$method(...$args); 
@@ -52,7 +54,6 @@ abstract class Model implements JsonSerializable
     {
         foreach ($relations as $relation) {
             if (method_exists($this, $relation)) {
-                // Pre-load for all models
                 foreach ($models as $model) {
                     $model->relations[$relation] = $model->$relation()->getResults();
                 }
@@ -63,7 +64,9 @@ abstract class Model implements JsonSerializable
     public static function query()
     {
         $instance = new static;
-        $builder = Container::getInstance()->make('db')->table($instance->getTable());
+        $builder = Container::getInstance()->make('db')
+            ->table($instance->getTable())
+            ->setModelClass(static::class);
         
         // Detect SoftDeletes trait
         if (in_array(\Phantom\Traits\SoftDeletes::class, class_uses_recursive(static::class))) {
@@ -75,8 +78,7 @@ abstract class Model implements JsonSerializable
 
     public static function all()
     {
-        $results = static::query()->get();
-        return new Collection(array_map(fn($attributes) => new static((array) $attributes), $results));
+        return static::query()->get()->map(fn($attr) => new static((array)$attr));
     }
 
     public static function find($id)
@@ -113,7 +115,7 @@ abstract class Model implements JsonSerializable
         $db = Container::getInstance()->make('db');
         
         if ($this->exists) {
-            static::query()
+            $db->table($this->getTable())
                 ->where($this->primaryKey, $this->attributes[$this->primaryKey])
                 ->update($this->attributes);
         } else {
@@ -131,13 +133,18 @@ abstract class Model implements JsonSerializable
             return $this->table;
         }
 
-        // Simple pluralization: User -> users
         $className = (new \ReflectionClass($this))->getShortName();
         return strtolower($className) . 's';
     }
 
     public function __get($key)
     {
+        // 1. Check for Accessor
+        $accessor = 'get' . str_replace('_', '', ucwords($key, '_')) . 'Attribute';
+        if (method_exists($this, $accessor)) {
+            return $this->$accessor($this->attributes[$key] ?? null);
+        }
+
         if (isset($this->attributes[$key])) {
             return $this->attributes[$key];
         }
@@ -148,11 +155,23 @@ abstract class Model implements JsonSerializable
 
         if (method_exists($this, $key)) {
             $result = $this->$key()->getResults();
-            $this->relations[$key] = $result; // Cache for next time
+            $this->relations[$key] = $result;
             return $result;
         }
 
         return null;
+    }
+
+    public function __set($key, $value)
+    {
+        // Check for Mutator
+        $mutator = 'set' . str_replace('_', '', ucwords($key, '_')) . 'Attribute';
+        
+        if (method_exists($this, $mutator)) {
+            $this->$mutator($value);
+        } else {
+            $this->attributes[$key] = $value;
+        }
     }
 
     public function hasMany($related, $foreignKey = null, $localKey = null)
@@ -166,8 +185,7 @@ abstract class Model implements JsonSerializable
             protected $related;
             public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
             public function getResults() { 
-                $results = $this->query->get();
-                return new Collection(array_map(fn($attr) => new $this->related((array)$attr), $results));
+                return $this->query->get()->map(fn($attr) => new $this->related((array)$attr));
             }
             public function __call($method, $args) { return $this->query->$method(...$args); }
         };
@@ -220,8 +238,7 @@ abstract class Model implements JsonSerializable
             protected $related;
             public function __construct($query, $related) { $this->query = $query; $this->related = $related; }
             public function getResults() { 
-                $results = $this->query->get();
-                return new Collection(array_map(fn($attr) => new $this->related((array)$attr), $results));
+                return $this->query->get()->map(fn($attr) => new $this->related((array)$attr));
             }
             public function __call($method, $args) { return $this->query->$method(...$args); }
         };
@@ -229,7 +246,6 @@ abstract class Model implements JsonSerializable
 
     public function morphTo($name = null)
     {
-        // Si no se pasa nombre, intentamos adivinarlo por el nombre del método (caller)
         if (!$name) {
             $name = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
         }
@@ -263,9 +279,16 @@ abstract class Model implements JsonSerializable
         return strtolower((new \ReflectionClass($this))->getShortName()) . '_id';
     }
 
-    public function __set($key, $value)
+    public static function __callStatic($method, $args)
     {
-        $this->attributes[$key] = $value;
+        $instance = new static;
+        $builder = static::query();
+        
+        if (method_exists($instance, 'scope' . ucfirst($method))) {
+            return $builder->$method(...$args);
+        }
+
+        return $builder->$method(...$args);
     }
 
     public function jsonSerialize(): mixed

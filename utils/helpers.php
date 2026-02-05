@@ -135,6 +135,18 @@ if (! function_exists('auth')) {
     }
 }
 
+if (! function_exists('gate')) {
+    /**
+     * Get the gate instance.
+     *
+     * @return \Phantom\Security\Gate
+     */
+    function gate()
+    {
+        return app('gate');
+    }
+}
+
 if (! function_exists('cache')) {
     /**
      * Get the cache instance or a value from cache.

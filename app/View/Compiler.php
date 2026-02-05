@@ -53,6 +53,13 @@ class Compiler
 
         $this->content = str_replace('@endforeach', "<?php endforeach; ?>", $this->content);
         
+        // @can / @elsecan / @endcan
+        $this->content = preg_replace_callback('/@can\s*\((.+?)\)/', function($m) {
+            return "<?php if(gate()->allows(" . $m[1] . ")): ?>";
+        }, $this->content);
+
+        $this->content = str_replace('@endcan', "<?php endif; ?>", $this->content);
+
         // @include
         $this->content = preg_replace_callback('/@include\s*\(\'(.+?)\'\)/', function($m) {
             return "<?php echo \Phantom\View\View::make('" . $m[1] . "', get_defined_vars())->render(); ?>";

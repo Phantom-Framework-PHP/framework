@@ -54,4 +54,17 @@ return [
 
     'fallback_locale' => 'en',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Autoloaded Service Providers
+    |--------------------------------------------------------------------------
+    */
+
+    'providers' => [
+        \Phantom\Providers\AppServiceProvider::class,
+        \Phantom\Providers\DatabaseServiceProvider::class,
+        \Phantom\Providers\SessionServiceProvider::class,
+        \Phantom\Providers\AuthServiceProvider::class,
+    ],
+
 ];

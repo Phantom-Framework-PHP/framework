@@ -62,7 +62,7 @@ class PolymorphicRelationshipTest extends TestCase
         $comments = $post->comments;
 
         $this->assertCount(1, $comments);
-        $this->assertEquals('Great post!', $comments[0]->body);
+        $this->assertEquals('Great post!', $comments->first()->body);
     }
 
     public function test_morph_to_relationship()
