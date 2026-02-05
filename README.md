@@ -1,4 +1,4 @@
-# Phantom Framework v1.12.7
+# Phantom Framework v1.13.5
 
 Phantom is a minimalist, elegant, and fast PHP framework, designed for developers seeking Laravel's structure with the lightness of a micro-framework.
 
@@ -38,7 +38,7 @@ Our [Documentation Manual](DOCUMENTATION.md) covers everything you need to maste
 - **📦 IoC Container**: Professional and powerful dependency management.
 - **🛣️ Advanced Routing**: Route Groups, Named Routes, Middlewares, and **Method Injection**.
 - **🎨 View Engine**: Blade-like template system with layouts, components, and caching (v1.10).
-- **🗄️ Phantom ORM**: Active Record with Eager Loading, Relationships, Polymorphism, and Soft Deletes.
+- **🗄️ Phantom ORM**: Active Record with Eager Loading, Relationships, Polymorphism, Soft Deletes, **Attribute Casting, and Mass Assignment Protection (v1.13)**.
 - **🛡️ Native Security**: CSRF protection, data validation, and secure hashing (Argon2/Bcrypt).
 - **🌐 Internationalization**: Built-in multi-language support (i18n).
 - **✉️ Mail System**: Integrated and easy-to-use email sending system.
@@ -49,6 +49,7 @@ Our [Documentation Manual](DOCUMENTATION.md) covers everything you need to maste
 - **🧪 Testing Suite**: Built-in system for HTTP Feature Testing and unit tests.
 - **💻 Phantom CLI**: Professional toolkit including `serve`, `migrate`, and `tinker` REPL.
 - **📦 Modern Tools**: Native Fluent Collections, API Resources, and Request Validation.
+- **⏱️ Smart Timestamps**: Automatic `created_at` and `updated_at` management for models.
 
 ## Requirements
 

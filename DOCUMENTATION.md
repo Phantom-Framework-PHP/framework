@@ -357,6 +357,15 @@ $books = Book::with('author')->get();
 ```
 
 <a name="orm-features"></a>
+### Advanced Model Features (v1.13)
+- **Mass Assignment:** Define `$fillable = ['field1', 'field2']` to protect against malicious data injection.
+- **Static Creation:** `User::create($data)` instantiates, fills and saves a model in one step.
+- **Attribute Casting:** Use `$casts = ['is_admin' => 'bool', 'meta' => 'json']` to transform data automatically.
+- **Serialization:** Control JSON output with `$hidden`, `$visible`, and `$appends`.
+- **Smart Timestamps:** Automatic `created_at` and `updated_at` management (set `$timestamps = false` to disable).
+- **Find or Fail:** `User::findOrFail($id)` throws an exception if the record doesn't exist.
+
+<a name="orm-features-legacy"></a>
 ### Accessors, Mutators & Scopes (v1.11.2)
 - **Accessors:** `getFirstNameAttribute($value)` -> Access as `$user->first_name`.
 - **Mutators:** `setPasswordAttribute($value)` -> Set as `$user->password = 'secret'`.
