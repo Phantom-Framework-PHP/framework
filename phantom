@@ -25,6 +25,7 @@ if ($command === 'list') {
     echo "  make:controller     Create a new controller class\n";
     echo "  make:view           Create a new view file\n";
     echo "  make:seeder         Create a new seeder class\n";
+    echo "  make:middleware     Create a new middleware class\n";
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
 } elseif ($command === 'make:seeder') {
@@ -43,8 +44,27 @@ if ($command === 'list') {
     $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/seeder.stub');
     $content = str_replace('{{class}}', $name, $stub);
 
-    file_put_contents($path, $content);
+    file_contents($path, $content);
     echo "Created Seeder: database/seeders/{$name}.php\n";
+
+} elseif ($command === 'make:middleware') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Middleware name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/app/Http/Middlewares/{$name}.php";
+    if (file_exists($path)) {
+        echo "Error: Middleware already exists!\n";
+        exit(1);
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/middleware.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+
+    file_put_contents($path, $content);
+    echo "Created Middleware: app/Http/Middlewares/{$name}.php\n";
 
 } elseif ($command === 'db:seed') {
     echo "Seeding database...\n";
