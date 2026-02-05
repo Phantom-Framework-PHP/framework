@@ -249,11 +249,13 @@ class Router
     protected function resolveAction($action, Request $request)
     {
         if (is_callable($action)) {
-            $result = call_user_func($action, $request);
+            $dependencies = $this->resolveMethodDependencies($action, $request);
+            $result = call_user_func_array($action, $dependencies);
         } elseif (is_array($action)) {
             [$controller, $method] = $action;
             $controllerInstance = app($controller);
-            $result = call_user_func([$controllerInstance, $method], $request);
+            $dependencies = $this->resolveMethodDependencies([$controllerInstance, $method], $request);
+            $result = call_user_func_array([$controllerInstance, $method], $dependencies);
         } else {
             throw new Exception("Invalid route action type.");
         }
@@ -263,6 +265,41 @@ class Router
         }
 
         return new Response($result);
+    }
+
+    /**
+     * Resolve the dependencies for a given method.
+     *
+     * @param mixed $action
+     * @param Request $request
+     * @return array
+     */
+    protected function resolveMethodDependencies($action, Request $request)
+    {
+        $reflection = is_array($action) 
+            ? new \ReflectionMethod($action[0], $action[1]) 
+            : new \ReflectionFunction($action);
+
+        $dependencies = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $type = $parameter->getType();
+            
+            if ($type && !$type->isBuiltin()) {
+                $className = $type->getName();
+                
+                if ($className === Request::class) {
+                    $dependencies[] = $request;
+                } else {
+                    $dependencies[] = app($className);
+                }
+            } else {
+                // For basic parameters, we try to get from request input by name
+                $dependencies[] = $request->input($parameter->getName());
+            }
+        }
+
+        return $dependencies;
     }
     
     public function loadRoutes($path)
