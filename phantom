@@ -26,6 +26,7 @@ if ($command === 'list') {
     echo "  make:view           Create a new view file\n";
     echo "  make:seeder         Create a new seeder class\n";
     echo "  make:middleware     Create a new middleware class\n";
+    echo "  make:resource       Create a new API resource class\n";
     echo "  serve               Start the development server\n";
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
@@ -66,6 +67,31 @@ if ($command === 'list') {
 
     file_put_contents($path, $content);
     echo "Created Middleware: app/Http/Middlewares/{$name}.php\n";
+
+} elseif ($command === 'make:resource') {
+    $name = $args[1] ?? null;
+    if (!$name) {
+        echo "Error: Resource name required.\n";
+        exit(1);
+    }
+
+    $path = __DIR__ . "/app/Http/Resources/{$name}.php";
+    
+    $directory = dirname($path);
+    if (!file_exists($directory)) {
+        mkdir($directory, 0755, true);
+    }
+
+    if (file_exists($path)) {
+        echo "Error: Resource already exists!\n";
+        exit(1);
+    }
+
+    $stub = file_get_contents(__DIR__ . '/app/Console/Stubs/resource.stub');
+    $content = str_replace('{{class}}', $name, $stub);
+
+    file_put_contents($path, $content);
+    echo "Created Resource: app/Http/Resources/{$name}.php\n";
 
 } elseif ($command === 'serve') {
     $port = $args[1] ?? 8000;
