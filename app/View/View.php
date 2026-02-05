@@ -11,6 +11,8 @@ class View
     protected $sections = [];
     protected $sectionStack = [];
     protected $layout;
+    protected $pushes = [];
+    protected $pushStack = [];
 
     public function __construct($view, $data = [])
     {
@@ -57,11 +59,10 @@ class View
 
         $compiledPath = storage_path("compiled/" . md5($view) . ".php");
 
-        // Simple cache: Compile if not exists or original is newer
         if (!file_exists($compiledPath) || filemtime($path) > filemtime($compiledPath)) {
             $compiler = new Compiler();
             $compiledContent = $compiler->compile(file_get_contents($path));
-            
+
             if (!file_exists(dirname($compiledPath))) {
                 mkdir(dirname($compiledPath), 0755, true);
             }
@@ -101,6 +102,26 @@ class View
     public function yield($name)
     {
         return $this->sections[$name] ?? '';
+    }
+
+    public function startPush($name)
+    {
+        ob_start();
+        $this->pushStack[] = $name;
+    }
+
+    public function endPush()
+    {
+        $name = array_pop($this->pushStack);
+        if (!isset($this->pushes[$name])) {
+            $this->pushes[$name] = [];
+        }
+        $this->pushes[$name][] = ob_get_clean();
+    }
+
+    public function stack($name)
+    {
+        return implode('', $this->pushes[$name] ?? []);
     }
 
     public function __toString()

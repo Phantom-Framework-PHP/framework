@@ -15,12 +15,14 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
     *   [Relationships](#orm-relationships)
     *   [Polymorphism](#orm-polymorphism)
     *   [Soft Deletes](#orm-soft-deletes)
+    *   [Model Observers](#orm-observers)
 7.  [Collections](#collections)
 8.  [API Resources](#api-resources)
 9.  [Testing Suite](#testing)
 10. [Real-Time Communication](#real-time)
     *   [Server-Sent Events (SSE)](#sse)
     *   [Event Broadcasting](#broadcasting)
+    *   [Frontend Real-time (Echo)](#frontend-realtime)
 11. [Phantom CLI (Binary)](#cli)
     *   [Generator Commands](#cli-generators)
     *   [Tinker (REPL)](#cli-tinker)
@@ -30,22 +32,11 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
 <a name="architecture"></a>
 ## 1. Architecture & Container
 
-Phantom is built on a powerful **IoC (Inversion of Control) Container**. This allows for easy service management and automatic dependency injection.
-
-### Accessing the App
-You can use the `app()` helper to access any service registered in the container:
-```php
-$config = app('config');
-$db = app('db');
-```
+Phantom is built on a powerful **IoC (Inversion of Control) Container**.
 
 ### Service Providers
-Providers are the heart of the modular architecture. You can register them in `config/app.php`.
+Providers are the heart of the modular architecture. Register them in `config/app.php`.
 ```php
-namespace App\Providers;
-
-use Phantom\Core\ServiceProvider;
-
 class MyServiceProvider extends ServiceProvider {
     public function register() {
         $this->app->singleton('service', fn() => new MyService());
@@ -58,7 +49,7 @@ class MyServiceProvider extends ServiceProvider {
 <a name="routing"></a>
 ## 2. Routing & Controllers
 
-Routes are defined in `routes/web.php`. Phantom supports automatic **Method Injection**.
+Phantom supports automatic **Method Injection**.
 
 ### Basic Routing
 ```php
@@ -67,60 +58,17 @@ $router->get('/user/{id}', function(int $id) {
 });
 ```
 
-### Controller Example with Injection
-```php
-class PostController extends Controller {
-    public function store(Request $request, PostService $service) {
-        $data = $request->validate(['title' => 'required']);
-        return $service->create($data);
-    }
-}
-```
-
----
-
-<a name="middleware"></a>
-## 3. Middleware System
-
-Middlewares intercept requests before they reach your controller.
-
-### Global Middlewares
-Register them in the Router to run on every request:
-```php
-$router->use(\Phantom\Http\Middlewares\VerifyCsrfToken::class);
-```
-
----
-
-<a name="requests"></a>
-## 4. Request & Validation
-
-The `Request` object provides a clean API to interact with user input.
-
-### Accessing Data
-```php
-$request->all();           // Array of all inputs
-$request->input('name');   // Get specific field
-```
-
-### Inline Validation
-```php
-$data = $request->validate([
-    'email' => 'required|email',
-    'age' => 'numeric|min:18'
-]);
-```
-
 ---
 
 <a name="views"></a>
 ## 5. Views & Phantom Templates
 
-Phantom includes a **Compiled Template Engine** (Blade-like) that caches views in `storage/compiled`.
+Phantom includes a **Compiled Template Engine** (Blade-like).
 
 ### Syntax
 *   **Echo**: `{{ $var }}` (Escaped) or `{!! $var !!}` (Raw).
 *   **Directives**: `@if`, `@foreach`, `@include`, `@extends`, `@section`, `@yield`.
+*   **Stacks**: Inyect content from children to layouts using `@push('name')` and `@stack('name')`.
 *   **Authorization**: `@can('update', $post) ... @endcan`.
 
 ---
@@ -128,62 +76,13 @@ Phantom includes a **Compiled Template Engine** (Blade-like) that caches views i
 <a name="orm"></a>
 ## 6. ORM (Database)
 
-<a name="orm-basic"></a>
-### Basic Usage
+<a name="orm-observers"></a>
+### Model Observers
+Observers group model event listeners.
 ```php
-$users = User::all(); // Returns a Collection
-$user = User::find(1);
-$user->save();
+User::observe(UserObserver::class);
 ```
-
-<a name="orm-relationships"></a>
-### Relationships
-*   **One to Many**: `return $this->hasMany(Comment::class);`
-*   **Belongs To**: `return $this->belongsTo(User::class);`
-
-<a name="orm-soft-deletes"></a>
-### Soft Deletes
-```php
-use Phantom\Traits\SoftDeletes;
-
-class Post extends Model {
-    use SoftDeletes;
-}
-```
-
----
-
-<a name="collections"></a>
-## 7. Collections
-
-The `Collection` class provides a wrapper for arrays with functional methods.
-
-```php
-$collection = User::all();
-$emails = $collection->pluck('email');
-```
-
----
-
-<a name="api-resources"></a>
-## 8. API Resources
-
-Transform your models into JSON structures effortlessly.
-
-```php
-return UserResource::make($user);
-```
-
----
-
-<a name="testing"></a>
-## 9. Testing Suite
-
-Phantom is built for TDD. Use `FeatureTestCase` to test your routes.
-
-```php
-$this->get('/api/users')->assertStatus(200)->assertJson(['status' => 'ok']);
-```
+Available events: `creating`, `created`, `updating`, `updated`, `deleting`, `deleted`.
 
 ---
 
@@ -192,15 +91,10 @@ $this->get('/api/users')->assertStatus(200)->assertJson(['status' => 'ok']);
 
 <a name="sse"></a>
 ### Server-Sent Events (SSE)
-SSE allows you to stream data from the server to the client over HTTP.
-
+SSE allows you to stream data from the server to the client.
 ```php
-// In a Controller
 return response()->stream(function($stream) {
-    while(true) {
-        $stream->event(['time' => date('H:i:s')], 'timer');
-        sleep(1);
-    }
+    $stream->event(['msg' => 'hello'], 'message');
 });
 ```
 
@@ -210,26 +104,20 @@ Broadcast your events to the client by implementing `ShouldBroadcast`.
 
 ```php
 class OrderPlaced implements ShouldBroadcast {
-    public function broadcastOn() {
-        return ['orders'];
-    }
-    public function broadcastWith() {
-        return ['id' => $this->order->id];
-    }
+    public function broadcastOn() { return ['orders']; }
+    public function broadcastWith() { return ['id' => 1]; }
 }
 ```
+
+<a name="frontend-realtime"></a>
+### Frontend Real-time (Echo)
+Use `@stack('scripts')` in your layout and `@push('scripts')` in your views to initialize client-side WebSocket connections.
 
 ---
 
 <a name="cli"></a>
 ## 11. Phantom CLI
 
-<a name="cli-generators"></a>
-### Generator Commands
-*   `make:model`, `make:controller`, `make:migration`, `make:middleware`, `make:resource`, `make:command`.
-
-<a name="cli-tinker"></a>
-### Phantom Tinker (REPL)
-```bash
-php phantom tinker
-```
+*   `php phantom serve`: Start dev server.
+*   `php phantom tinker`: Interactive REPL.
+*   `php phantom make:observer`: Create model observer.

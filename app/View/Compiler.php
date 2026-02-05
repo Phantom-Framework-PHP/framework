@@ -60,6 +60,17 @@ class Compiler
 
         $this->content = str_replace('@endcan', "<?php endif; ?>", $this->content);
 
+        // @push / @endpush / @stack
+        $this->content = preg_replace_callback('/@push\s*\(\'(.+?)\'\)/', function($m) {
+            return "<?php \$this->startPush('" . $m[1] . "'); ?>";
+        }, $this->content);
+
+        $this->content = str_replace('@endpush', "<?php \$this->endPush(); ?>", $this->content);
+
+        $this->content = preg_replace_callback('/@stack\s*\(\'(.+?)\'\)/', function($m) {
+            return "<?php echo \$this->stack('" . $m[1] . "'); ?>";
+        }, $this->content);
+
         // @include
         $this->content = preg_replace_callback('/@include\s*\(\'(.+?)\'\)/', function($m) {
             return "<?php echo \Phantom\View\View::make('" . $m[1] . "', get_defined_vars())->render(); ?>";
