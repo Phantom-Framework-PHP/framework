@@ -84,4 +84,26 @@ class Request
     {
         return array_merge($this->queryParams, $this->postParams, $this->routeParams);
     }
+
+    /**
+     * Validate the request data.
+     *
+     * @param array $rules
+     * @return array
+     * @throws \Exception
+     */
+    public function validate(array $rules)
+    {
+        $validator = new \Phantom\Validation\Validator($this->all(), $rules);
+
+        if (!$validator->validate()) {
+            // In a real framework we would redirect back with errors
+            // For now, we throw an exception with the first error
+            $errors = $validator->errors();
+            $firstField = array_key_first($errors);
+            throw new \Exception($errors[$firstField][0], 422);
+        }
+
+        return array_intersect_key($this->all(), $rules);
+    }
 }
