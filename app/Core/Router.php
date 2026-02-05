@@ -12,6 +12,19 @@ class Router
     protected $namedRoutes = [];
     protected $groupStack = [];
     protected $lastRoute;
+    protected $globalMiddleware = [];
+
+    /**
+     * Register a global middleware.
+     * 
+     * @param string $middleware
+     * @return $this
+     */
+    public function use($middleware)
+    {
+        $this->globalMiddleware[] = $middleware;
+        return $this;
+    }
 
     /**
      * Register a GET route.
@@ -211,9 +224,11 @@ class Router
                     $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                     $request->setRouteParams($params);
 
+                    $middleware = array_merge($this->globalMiddleware, $route['middleware']);
+
                     return (new Pipeline())
                         ->send($request)
-                        ->through($route['middleware'])
+                        ->through($middleware)
                         ->then(function($request) use ($route) {
                             return $this->resolveAction($route['action'], $request);
                         });
