@@ -9,7 +9,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.10.0';
+    const VERSION = '1.10.1';
 
     /**
      * The base path for the Phantom installation.
