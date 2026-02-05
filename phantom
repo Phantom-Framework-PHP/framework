@@ -28,6 +28,7 @@ if ($command === 'list') {
     echo "  make:middleware     Create a new middleware class\n";
     echo "  make:resource       Create a new API resource class\n";
     echo "  serve               Start the development server\n";
+    echo "  tinker              Interactive shell (REPL)\n";
 } elseif ($command === 'version') {
     echo "Phantom Framework v" . $app->version() . "\n";
 } elseif ($command === 'make:seeder') {
@@ -97,6 +98,64 @@ if ($command === 'list') {
     $port = $args[1] ?? 8000;
     echo "Phantom development server started: http://localhost:{$port}\n";
     passthru("php -S localhost:{$port} -t public");
+
+} elseif ($command === 'tinker') {
+    echo "Phantom Framework v" . $app->version() . " - Interactive Shell\n";
+    echo "Type 'exit' to quit.\n\n";
+
+    if (function_exists('readline')) {
+        readline_read_history(sys_get_temp_dir() . '/phantom_tinker_history');
+    }
+
+    while (true) {
+        if (function_exists('readline')) {
+            $input = readline("phantom> ");
+            if (!empty($input)) {
+                readline_add_history($input);
+                readline_write_history(sys_get_temp_dir() . '/phantom_tinker_history');
+            }
+        } else {
+            echo "phantom> ";
+            $input = fgets(STDIN);
+        }
+
+        $input = trim($input);
+
+        if ($input === 'exit' || $input === 'quit') {
+            break;
+        }
+
+        if (empty($input)) {
+            continue;
+        }
+
+        // Ensure statement ends with semicolon
+        if (!str_ends_with($input, ';') && !str_ends_with($input, '}')) {
+            $input .= ';';
+        }
+
+        // Wrap with return if it's an expression to show the result
+        if (!str_starts_with($input, 'echo') && !str_starts_with($input, 'print') && !str_contains($input, ';')) {
+            $input = "return " . $input;
+        }
+
+        try {
+            ob_start();
+            $result = eval($input);
+            $output = ob_get_clean();
+
+            if ($output) {
+                echo $output . "\n";
+            }
+
+            if ($result !== null) {
+                echo "=> " . var_export($result, true) . "\n";
+            }
+        } catch (Throwable $e) {
+            ob_end_clean();
+            echo "Error: " . $e->getMessage() . "\n";
+        }
+    }
 
 } elseif ($command === 'db:seed') {
     echo "Seeding database...\n";
