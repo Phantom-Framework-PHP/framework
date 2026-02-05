@@ -14,6 +14,7 @@ abstract class Model implements JsonSerializable
     protected $hidden = [];
     protected $visible = [];
     protected $appends = [];
+    protected $casts = [];
     public $timestamps = true;
     protected $attributes = [];
     protected $relations = [];
@@ -274,6 +275,16 @@ abstract class Model implements JsonSerializable
         return strtolower($className) . 's';
     }
 
+    /**
+     * Get all the current attributes on the model.
+     *
+     * @return array
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
+
     public function __get($key)
     {
         // 1. Check for Accessor
@@ -282,8 +293,8 @@ abstract class Model implements JsonSerializable
             return $this->$accessor($this->attributes[$key] ?? null);
         }
 
-        if (isset($this->attributes[$key])) {
-            return $this->attributes[$key];
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->getAttributeValue($key);
         }
 
         if (isset($this->relations[$key])) {
@@ -299,6 +310,70 @@ abstract class Model implements JsonSerializable
         return null;
     }
 
+    /**
+     * Get the value of an attribute after applying casts.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    protected function getAttributeValue($key)
+    {
+        $value = $this->attributes[$key];
+
+        if ($this->hasCast($key)) {
+            return $this->castAttribute($key, $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Determine if the given attribute has a cast defined.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    protected function hasCast($key)
+    {
+        return array_key_exists($key, $this->casts);
+    }
+
+    /**
+     * Cast an attribute to a native PHP type.
+     *
+     * @param  string  $key
+     * @param  mixed   $value
+     * @return mixed
+     */
+    protected function castAttribute($key, $value)
+    {
+        if (is_null($value)) {
+            return $value;
+        }
+
+        $type = strtolower($this->casts[$key]);
+
+        switch ($type) {
+            case 'int':
+            case 'integer':
+                return (int) $value;
+            case 'real':
+            case 'float':
+            case 'double':
+                return (float) $value;
+            case 'string':
+                return (string) $value;
+            case 'bool':
+            case 'boolean':
+                return (bool) $value;
+            case 'array':
+            case 'json':
+                return is_string($value) ? json_decode($value, true) : $value;
+            default:
+                return $value;
+        }
+    }
+
     public function __set($key, $value)
     {
         // Check for Mutator
@@ -306,9 +381,18 @@ abstract class Model implements JsonSerializable
         
         if (method_exists($this, $mutator)) {
             $this->$mutator($value);
-        } else {
-            $this->attributes[$key] = $value;
+            return;
         }
+
+        if ($this->hasCast($key)) {
+            $type = strtolower($this->casts[$key]);
+            if (($type === 'array' || $type === 'json') && !is_string($value)) {
+                $this->attributes[$key] = json_encode($value);
+                return;
+            }
+        }
+
+        $this->attributes[$key] = $value;
     }
 
     public function hasMany($related, $foreignKey = null, $localKey = null)
