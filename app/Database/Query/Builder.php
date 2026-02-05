@@ -14,10 +14,29 @@ class Builder
     protected $orders = [];
     protected $limit;
     protected $bindings = [];
+    protected $useSoftDeletes = false;
 
     public function __construct(Database $db)
     {
         $this->db = $db;
+    }
+
+    public function useSoftDeletes($value = true)
+    {
+        $this->useSoftDeletes = $value;
+        return $this;
+    }
+
+    public function withTrashed()
+    {
+        $this->useSoftDeletes = false;
+        return $this;
+    }
+
+    public function onlyTrashed()
+    {
+        $this->useSoftDeletes = false;
+        return $this->where('deleted_at', 'IS NOT', null);
     }
 
     public function table($table)
@@ -45,7 +64,9 @@ class Builder
             'value' => $value
         ];
 
-        $this->bindings[] = $value;
+        if ($operator !== 'IS' && $operator !== 'IS NOT') {
+            $this->bindings[] = $value;
+        }
 
         return $this;
     }
@@ -64,6 +85,10 @@ class Builder
 
     public function get()
     {
+        if ($this->useSoftDeletes) {
+            $this->where('deleted_at', 'IS', null);
+        }
+
         $sql = $this->toSql();
         return $this->db->select($sql, $this->bindings);
     }
@@ -77,6 +102,10 @@ class Builder
 
     public function count()
     {
+        if ($this->useSoftDeletes) {
+            $this->where('deleted_at', 'IS', null);
+        }
+
         $this->columns = ["COUNT(*) as aggregate"];
         $sql = $this->toSql();
         $result = $this->db->select($sql, $this->bindings);
@@ -85,12 +114,15 @@ class Builder
 
     public function paginate($perPage = 15)
     {
+        if ($this->useSoftDeletes) {
+            $this->where('deleted_at', 'IS', null);
+        }
+
         $page = (int) ($_GET['page'] ?? 1);
         $total = $this->count();
         
         $this->columns = ['*']; // Reset columns after count
         $this->limit($perPage);
-        $this->bindings = array_merge($this->bindings, []); // Keep bindings intact
         
         // Manual offset calculation for the SQL
         $offset = ($page - 1) * $perPage;
@@ -130,7 +162,11 @@ class Builder
     {
         $parts = [];
         foreach ($this->wheres as $where) {
-            $parts[] = "{$where['column']} {$where['operator']} ?";
+            if ($where['operator'] === 'IS' || $where['operator'] === 'IS NOT') {
+                $parts[] = "{$where['column']} {$where['operator']} NULL";
+            } else {
+                $parts[] = "{$where['column']} {$where['operator']} ?";
+            }
         }
         return implode(' AND ', $parts);
     }

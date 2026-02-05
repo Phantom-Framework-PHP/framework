@@ -63,7 +63,14 @@ abstract class Model implements JsonSerializable
     public static function query()
     {
         $instance = new static;
-        return Container::getInstance()->make('db')->table($instance->getTable());
+        $builder = Container::getInstance()->make('db')->table($instance->getTable());
+        
+        // Detect SoftDeletes trait
+        if (in_array(\Phantom\Traits\SoftDeletes::class, class_uses_recursive(static::class))) {
+            $builder->useSoftDeletes();
+        }
+
+        return $builder;
     }
 
     public static function all()
@@ -89,6 +96,16 @@ abstract class Model implements JsonSerializable
     public static function where($column, $operator = null, $value = null)
     {
         return static::query()->where(...func_get_args());
+    }
+
+    public static function withTrashed()
+    {
+        return static::query()->withTrashed();
+    }
+
+    public static function onlyTrashed()
+    {
+        return static::query()->onlyTrashed();
     }
 
     public function save()
