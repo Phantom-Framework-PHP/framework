@@ -60,6 +60,34 @@ class Response
     }
 
     /**
+     * Set the headers for the response.
+     *
+     * @param array $headers
+     * @return $this
+     */
+    public function setHeaders(array $headers)
+    {
+        $this->headers = array_merge($this->headers, $headers);
+        return $this;
+    }
+
+    /**
+     * Create a JSON response.
+     *
+     * @param mixed $data
+     * @param int $status
+     * @return $this
+     */
+    public function json($data, $status = 200)
+    {
+        $this->content = json_encode($data);
+        $this->statusCode = $status;
+        $this->headers['Content-Type'] = 'application/json';
+        
+        return $this;
+    }
+
+    /**
      * Send the response to the browser.
      *
      * @return void

@@ -75,6 +75,38 @@ class Builder
         return $results[0] ?? null;
     }
 
+    public function count()
+    {
+        $this->columns = ["COUNT(*) as aggregate"];
+        $sql = $this->toSql();
+        $result = $this->db->select($sql, $this->bindings);
+        return (int) ($result[0]->aggregate ?? 0);
+    }
+
+    public function paginate($perPage = 15)
+    {
+        $page = (int) ($_GET['page'] ?? 1);
+        $total = $this->count();
+        
+        $this->columns = ['*']; // Reset columns after count
+        $this->limit($perPage);
+        $this->bindings = array_merge($this->bindings, []); // Keep bindings intact
+        
+        // Manual offset calculation for the SQL
+        $offset = ($page - 1) * $perPage;
+        
+        $sql = $this->toSql() . " OFFSET {$offset}";
+        $items = $this->db->select($sql, $this->bindings);
+
+        return [
+            'data' => $items,
+            'total' => $total,
+            'per_page' => $perPage,
+            'current_page' => $page,
+            'last_page' => ceil($total / $perPage)
+        ];
+    }
+
     public function toSql()
     {
         $sql = "SELECT " . implode(', ', $this->columns) . " FROM {$this->table}";
