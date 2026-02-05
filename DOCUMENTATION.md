@@ -24,7 +24,8 @@ Welcome to the official manual for Phantom, the minimalist PHP framework for mod
     *   [Event Broadcasting](#broadcasting)
     *   [Frontend Real-time (Echo)](#frontend-realtime)
 11. [Notification System](#notifications)
-12. [Phantom CLI (Binary)](#cli)
+12. [Task Scheduling](#scheduling)
+13. [Phantom CLI (Binary)](#cli)
     *   [Generator Commands](#cli-generators)
     *   [Tinker (REPL)](#cli-tinker)
 
@@ -75,28 +76,34 @@ Use `@stack('scripts')` in your layout and `@push('scripts')` in your views to i
 ## 11. Notification System
 Phantom provides a unified way to send notifications via various delivery channels.
 
-### Notifiable Trait
-Add `Notifiable` to your models to enable notifications:
-```php
-use Phantom\Traits\Notifiable;
-
-class User extends Model {
-    use Notifiable;
-}
-```
-
 ### Sending Notifications
 ```php
 $user->notify(new NewOrderNotification($order));
 ```
-
 Available channels: `database`, `mail`, `broadcast`.
 
 ---
 
+<a name="scheduling"></a>
+## 12. Task Scheduling
+Phantom allows you to define recurring tasks in `app/Console/Kernel.php`.
+
+### Defining Schedules
+```php
+// app/Console/Kernel.php
+return function($schedule) {
+    $schedule->command('migrate')->daily();
+};
+```
+
+### Running the Scheduler
+Add a cron entry: `* * * * * php /path/phantom schedule:run`.
+
+---
+
 <a name="cli"></a>
-## 12. Phantom CLI
+## 13. Phantom CLI
 
 *   `php phantom serve`: Start dev server.
 *   `php phantom tinker`: Interactive REPL.
-*   `php phantom make:observer`: Create model observer.
+*   `php phantom schedule:run`: Run scheduled tasks.

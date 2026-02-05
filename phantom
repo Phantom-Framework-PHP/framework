@@ -19,6 +19,7 @@ if ($command === 'list') {
     echo "  version             Display version\n";
     echo "  serve               Start the development server\n";
     echo "  tinker              Interactive shell (REPL)\n";
+    echo "  schedule:run        Run the scheduled commands\n";
     echo "  migrate             Run database migrations\n";
     echo "  migrate:rollback    Rollback the last database migration\n";
     echo "  db:seed             Seed the database with records\n";
@@ -56,14 +57,21 @@ if ($command === 'list') {
     echo "Phantom development server started: http://localhost:{$port}\n";
     passthru("php -S localhost:{$port} -t public");
 
+} elseif ($command === 'schedule:run') {
+    $schedule = new \Phantom\Console\Schedule();
+    $kernelPath = __DIR__ . '/app/Console/Kernel.php';
+    if (file_exists($kernelPath)) {
+        $kernel = require $kernelPath;
+        $kernel($schedule);
+    }
+    foreach ($schedule->events() as $event) {
+        if ($event->shouldRun()) $event->run();
+    }
+
 } elseif ($command === 'tinker') {
     echo "Phantom Framework v" . $app->version() . " - Interactive Shell\n";
     echo "Type 'exit' to quit.\n\n";
-
-    if (function_exists('readline')) {
-        readline_read_history(sys_get_temp_dir() . '/phantom_tinker_history');
-    }
-
+    if (function_exists('readline')) readline_read_history(sys_get_temp_dir() . '/phantom_tinker_history');
     while (true) {
         if (function_exists('readline')) {
             $input = readline("phantom> ");
@@ -75,16 +83,11 @@ if ($command === 'list') {
             echo "phantom> ";
             $input = fgets(STDIN);
         }
-
         $input = trim($input);
         if ($input === 'exit' || $input === 'quit') break;
         if (empty($input)) continue;
-
         if (!str_ends_with($input, ';') && !str_ends_with($input, '}')) $input .= ';';
-        if (!str_starts_with($input, 'echo') && !str_starts_with($input, 'print') && !str_contains($input, ';')) {
-            $input = "return " . $input;
-        }
-
+        if (!str_starts_with($input, 'echo') && !str_starts_with($input, 'print') && !str_contains($input, ';')) $input = "return " . $input;
         try {
             ob_start();
             $result = eval($input);
