@@ -74,6 +74,13 @@ class Builder
 
     public function where($column, $operator = null, $value = null)
     {
+        if (is_array($column)) {
+            foreach ($column as $key => $val) {
+                $this->where($key, '=', $val);
+            }
+            return $this;
+        }
+
         if (func_num_args() === 2) {
             $value = $operator;
             $operator = '=';
@@ -113,7 +120,15 @@ class Builder
         $sql = $this->toSql();
         $results = $this->db->select($sql, $this->bindings);
         
-        return new \Phantom\Core\Collection($results);
+        $collection = new \Phantom\Core\Collection($results);
+
+        if ($this->modelClass) {
+            return $collection->map(function ($item) {
+                return (new $this->modelClass)->newInstance((array) $item, true);
+            });
+        }
+
+        return $collection;
     }
 
     public function first()

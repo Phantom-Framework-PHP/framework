@@ -33,6 +33,36 @@ abstract class Model implements JsonSerializable
     }
 
     /**
+     * Set the exists state of the model.
+     *
+     * @param  bool  $exists
+     * @return $this
+     */
+    public function setExists($exists)
+    {
+        $this->exists = $exists;
+        return $this;
+    }
+
+    /**
+     * Create a new instance of the given model.
+     *
+     * @param  array  $attributes
+     * @param  bool   $exists
+     * @return static
+     */
+    public function newInstance($attributes = [], $exists = false)
+    {
+        $model = new static;
+
+        $model->attributes = $attributes;
+
+        $model->exists = $exists;
+
+        return $model;
+    }
+
+    /**
      * Fill the model with an array of attributes.
      *
      * @param  array  $attributes
@@ -79,6 +109,58 @@ abstract class Model implements JsonSerializable
     }
 
     /**
+     * Get the first record matching the attributes or instantiate it.
+     *
+     * @param  array  $attributes
+     * @param  array  $values
+     * @return static
+     */
+    public static function firstOrNew(array $attributes, array $values = [])
+    {
+        $instance = static::where($attributes)->first();
+
+        if ($instance) {
+            return $instance;
+        }
+
+        return new static(array_merge($attributes, $values));
+    }
+
+    /**
+     * Get the first record matching the attributes or create it.
+     *
+     * @param  array  $attributes
+     * @param  array  $values
+     * @return static
+     */
+    public static function firstOrCreate(array $attributes, array $values = [])
+    {
+        $instance = static::where($attributes)->first();
+
+        if ($instance) {
+            return $instance;
+        }
+
+        return static::create(array_merge($attributes, $values));
+    }
+
+    /**
+     * Create or update a record matching the attributes, and fill it with values.
+     *
+     * @param  array  $attributes
+     * @param  array  $values
+     * @return static
+     */
+    public static function updateOrCreate(array $attributes, array $values = [])
+    {
+        $instance = static::firstOrNew($attributes);
+
+        $instance->fill($values)->save();
+
+        return $instance;
+    }
+
+    /**
      * Register an observer for the model.
      *
      * @param  string  $class
@@ -116,8 +198,7 @@ abstract class Model implements JsonSerializable
                 $this->with = $with;
             }
             public function get() {
-                $collection = $this->query->get();
-                $models = $collection->map(fn($attr) => new $this->class((array)$attr));
+                $models = $this->query->get();
                 if ($models->count() > 0) {
                     $modelsArray = iterator_to_array($models);
                     (new $this->class)->loadRelations($modelsArray, $this->with);
@@ -158,25 +239,16 @@ abstract class Model implements JsonSerializable
         return $builder;
     }
 
-    public static function all()
-    {
-        return static::query()->get()->map(fn($attr) => new static((array)$attr));
-    }
-
-    public static function find($id)
-    {
-        $instance = new static;
-        $result = static::query()->where($instance->primaryKey, $id)->first();
-        
-        if ($result) {
-            $model = new static((array) $result);
-            $model->exists = true;
-            return $model;
+        public static function all()
+        {
+            return static::query()->get();
         }
-
-        return null;
-    }
-
+    
+        public static function find($id)
+        {
+            $instance = new static;
+            return static::query()->where($instance->primaryKey, $id)->first();
+        }
     /**
      * Find a model by its primary key or throw an exception.
      *
@@ -287,6 +359,10 @@ abstract class Model implements JsonSerializable
 
     public function __get($key)
     {
+        if ($key === 'exists') {
+            return $this->exists;
+        }
+
         // 1. Check for Accessor
         $accessor = 'get' . str_replace('_', '', ucwords($key, '_')) . 'Attribute';
         if (method_exists($this, $accessor)) {
