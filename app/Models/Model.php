@@ -19,6 +19,7 @@ abstract class Model implements JsonSerializable
     protected $attributes = [];
     protected $relations = [];
     protected $exists = false;
+    public $wasRecentlyCreated = false;
 
     /**
      * The registered observers.
@@ -290,7 +291,7 @@ abstract class Model implements JsonSerializable
         if ($this->timestamps) {
             $this->updateTimestamps();
         }
-        
+
         if ($this->exists) {
             $this->fireModelEvent('updating');
             $db->table($this->getTable())
@@ -302,8 +303,42 @@ abstract class Model implements JsonSerializable
             $db->table($this->getTable())->insert($this->attributes);
             $this->attributes[$this->primaryKey] = $db->getPdo()->lastInsertId();
             $this->exists = true;
+            $this->wasRecentlyCreated = true;
             $this->fireModelEvent('created');
         }
+
+        return $this;
+    }
+
+    /**
+     * Reload a fresh model instance from the database.
+     *
+     * @return static|null
+     */
+    public function fresh()
+    {
+        if (!$this->exists) {
+            return null;
+        }
+
+        return static::find($this->attributes[$this->primaryKey]);
+    }
+
+    /**
+     * Reload the current model instance with fresh attributes from the database.
+     *
+     * @return $this
+     */
+    public function refresh()
+    {
+        if (!$this->exists) {
+            return $this;
+        }
+
+        $fresh = $this->fresh();
+
+        $this->attributes = $fresh->getAttributes();
+        $this->relations = [];
 
         return $this;
     }
