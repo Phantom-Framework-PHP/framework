@@ -1,2 +1,11 @@
-
-.phpunit.result.cache
+/vendor/
+/.env
+/.phpunit.result.cache
+/storage/logs/*.log
+/storage/compiled/*.php
+/storage/framework/
+/public/assets/uploads/
+/public/compiled/
+/.idea/
+/.vscode/
+*.db
