@@ -284,6 +284,19 @@ if (! function_exists('get_locale')) {
     }
 }
 
+if (! function_exists('async')) {
+    /**
+     * Run a task asynchronously using Fibers.
+     *
+     * @param  callable  $callback
+     * @return mixed
+     */
+    function async(callable $callback)
+    {
+        return \Phantom\Core\Async::run($callback);
+    }
+}
+
 if (! function_exists('url')) {
     /**
      * Generate a url for the application.
