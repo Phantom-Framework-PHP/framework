@@ -297,6 +297,23 @@ if (! function_exists('async')) {
     }
 }
 
+if (! function_exists('ai')) {
+    /**
+     * Get the AI manager or a driver instance.
+     *
+     * @param  string|null  $driver
+     * @return \Phantom\AI\AIManager|\Phantom\AI\AIInterface
+     */
+    function ai($driver = null)
+    {
+        if (is_null($driver)) {
+            return app('ai');
+        }
+
+        return app('ai')->driver($driver);
+    }
+}
+
 if (! function_exists('url')) {
     /**
      * Generate a url for the application.

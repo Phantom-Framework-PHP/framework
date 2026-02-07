@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.15.4). This document covers the entire ecosystem, from the core architecture to the latest high-performance features.
+Welcome to the definitive technical manual for Phantom Framework (v1.16.1). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 
@@ -78,6 +78,10 @@ Welcome to the definitive technical manual for Phantom Framework (v1.15.4). This
     *   [JSON Translations (v1.14.9)](#i18n-json)
     *   [Dynamic Locale Switching](#i18n-dynamic)
 17. [**Asynchronous Programming (Fibers)**](#async)
+18. [**AI Native Integration (v1.16.1)**](#ai-native)
+    *   [Configuration](#ai-config)
+    *   [Basic Usage](#ai-usage)
+    *   [Drivers (Gemini, OpenAI)](#ai-drivers)
     *   [Basic Usage](#async-usage)
     *   [Suspending and Resuming](#async-suspend)
 
@@ -745,4 +749,48 @@ $fiber = new Fiber(function() {
 
 $status = $fiber->start();
 $fiber->resume('Some Data');
+```
+
+---
+
+<a name="ai-native"></a>
+## 18. AI Native Integration (v1.16.1)
+
+Phantom provides a native abstraction for Artificial Intelligence models, allowing you to easily integrate LLMs like Google Gemini or OpenAI into your application.
+
+<a name="ai-config"></a>
+### Configuration
+Configure your AI drivers in `config/ai.php`:
+```php
+'default' => env('AI_DRIVER', 'gemini'),
+'drivers' => [
+    'gemini' => [
+        'driver' => 'gemini',
+        'key' => env('GEMINI_API_KEY'),
+        'model' => 'gemini-1.5-flash',
+    ],
+    'openai' => [
+        'driver' => 'openai',
+        'key' => env('OPENAI_API_KEY'),
+        'model' => 'gpt-4o',
+    ],
+],
+```
+
+<a name="ai-usage"></a>
+### Basic Usage
+Use the `ai()` helper to interact with the default model:
+```php
+// Simple text generation
+$response = ai()->generate("Explain quantum physics in 3 sentences.");
+
+// Chat interaction
+$reply = ai()->chat("Hello, how are you?");
+```
+
+<a name="ai-drivers"></a>
+### Drivers
+- **Gemini:** Built-in support for Google's Gemini models via native cURL.
+- **OpenAI:** Support for GPT models.
+- **Ollama / Anthropic:** (Planned).
 ```
