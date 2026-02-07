@@ -23,6 +23,7 @@ if ($command === 'list') {
     echo "  migrate             Run database migrations\n";
     echo "  migrate:rollback    Rollback the last database migration\n";
     echo "  db:seed             Seed the database with records\n";
+    echo "  queue:work          Start processing jobs on the queue\n";
     echo "  make:model          Create a new model class\n";
     echo "  make:controller     Create a new controller class\n";
     echo "  make:migration      Create a new migration file\n";
@@ -255,6 +256,31 @@ if ($command === 'list') {
         }
     }
     echo "Database seeding completed.\n";
+
+} elseif ($command === 'queue:work') {
+    $connection = $args[1] ?? null;
+    $queue = $app->make('queue')->connection($connection);
+    
+    echo "Processing jobs from the queue...\n";
+    
+    while (true) {
+        $job = $queue->pop();
+
+        if ($job) {
+            echo "[" . date('Y-m-d H:i:s') . "] Processing: " . get_class($job) . "\n";
+            try {
+                if (method_exists($job, 'handle')) {
+                    $job->handle();
+                }
+                echo "[" . date('Y-m-d H:i:s') . "] Processed:  " . get_class($job) . "\n";
+            } catch (Throwable $e) {
+                echo "[" . date('Y-m-d H:i:s') . "] Failed:     " . get_class($job) . "\n";
+                echo "Error: " . $e->getMessage() . "\n";
+            }
+        } else {
+            sleep(3);
+        }
+    }
 
 } else {
     echo "Unknown command: {$command}\n";
