@@ -46,6 +46,14 @@ class QueueManager
             return new SyncQueue();
         }
 
+        if ($driver === 'database') {
+            return new DatabaseQueue(
+                app('db'),
+                $config['table'],
+                $config['queue'] ?? 'default'
+            );
+        }
+
         throw new Exception("Queue driver [{$driver}] not supported yet.");
     }
 

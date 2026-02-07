@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.12.7). This document covers the entire ecosystem, from the core architecture to the latest real-time features.
+Welcome to the definitive technical manual for Phantom Framework (v1.14.3). This document covers the entire ecosystem, from the core architecture to the latest real-time features.
 
 ---
 
@@ -62,6 +62,11 @@ Welcome to the definitive technical manual for Phantom Framework (v1.12.7). This
     *   [Configuration](#storage-config)
     *   [Basic Usage](#storage-usage)
     *   [Drivers (Local, FTP)](#storage-drivers)
+14. [**Queue System**](#queues)
+    *   [Configuration](#queue-config)
+    *   [Creating Jobs](#queue-jobs)
+    *   [Dispatching](#queue-dispatch)
+    *   [Drivers (Sync, Database)](#queue-drivers)
 
 ---
 
@@ -511,7 +516,22 @@ $this->post('/api/user', $data)->assertJson(['created' => true]);
 <a name="cli"></a>
 ## 12. Phantom CLI
 
-...
+The `phantom` binary is located in the root directory.
+
+<a name="tinker"></a>
+### Tinker (REPL)
+Interactive shell to test code: `php phantom tinker`.
+
+<a name="generators"></a>
+### Generators
+- `make:model`
+- `make:controller`
+- `make:migration`
+- `make:seeder`
+- `make:middleware`
+- `make:resource`
+- `make:observer`
+- `make:command`
 
 <a name="storage"></a>
 ## 13. File Storage (v1.14)
@@ -557,12 +577,63 @@ storage()->delete('file.txt');
 ```
 
 <a name="storage-drivers"></a>
-### Drivers (v1.14.2)
+### Drivers (v1.14.3)
 - **Local:** Stores files on the local server.
 - **FTP:** Stores files on a remote FTP server.
-- **S3:** (Planned) AWS S3 storage.
+- **S3:** AWS S3 storage and compatible services (MinIO, DigitalOcean).
 
 Specify a disk:
 ```php
 storage('ftp')->put('remote-file.txt', 'Content');
+storage('s3')->put('cloud-file.txt', 'Content');
 ```
+
+---
+
+<a name="queues"></a>
+## 14. Queue System (v1.14)
+
+Phantom's queue system allows you to defer the processing of a time-consuming task until a later time, significantly speeding up web requests.
+
+<a name="queue-config"></a>
+### Configuration
+Configure your queue connections in `config/queue.php`.
+```php
+'default' => env('QUEUE_CONNECTION', 'sync'),
+'connections' => [
+    'sync' => [
+        'driver' => 'sync',
+    ],
+    'database' => [
+        'driver' => 'database',
+        'table' => 'jobs',
+        'queue' => 'default',
+    ],
+],
+```
+
+<a name="queue-jobs"></a>
+### Creating Jobs
+A job is a simple class with a `handle()` method.
+```php
+namespace App\Jobs;
+
+class ProcessPodcast {
+    public function handle() {
+        // Process podcast...
+    }
+}
+```
+
+<a name="queue-dispatch"></a>
+### Dispatching
+Use the `dispatch()` helper.
+```php
+dispatch(new ProcessPodcast($podcast));
+```
+
+<a name="queue-drivers"></a>
+### Drivers (v1.14.4)
+- **Sync:** Executes jobs immediately (default for development).
+- **Database:** Stores jobs in a database table to be processed by a worker.
+- **Redis:** (Planned) High-performance queue driver.
