@@ -324,6 +324,49 @@ if (! function_exists('csrf_field')) {
     }
 }
 
+if (! function_exists('vite')) {
+    /**
+     * Generate Vite asset tags.
+     *
+     * @param  string|array  $entry
+     * @return string
+     */
+    function vite($entry)
+    {
+        $hotPath = base_path('public/hot');
+        $entries = (array) $entry;
+        $html = '';
+
+        if (file_exists($hotPath)) {
+            $url = rtrim(file_get_contents($hotPath));
+            $html .= '<script type="module" src="' . $url . '/@vite/client"></script>';
+            foreach ($entries as $e) {
+                $html .= '<script type="module" src="' . $url . '/' . ltrim($e, '/') . '"></script>';
+            }
+            return $html;
+        }
+
+        $manifestPath = base_path('public/build/manifest.json');
+        if (!file_exists($manifestPath)) {
+            return '';
+        }
+
+        $manifest = json_decode(file_get_contents($manifestPath), true);
+        foreach ($entries as $e) {
+            if (isset($manifest[$e])) {
+                $html .= '<script type="module" src="/build/' . $manifest[$e]['file'] . '"></script>';
+                if (isset($manifest[$e]['css'])) {
+                    foreach ($manifest[$e]['css'] as $css) {
+                        $html .= '<link rel="stylesheet" href="/build/' . $css . '">';
+                    }
+                }
+            }
+        }
+
+        return $html;
+    }
+}
+
 if (! function_exists('class_uses_recursive')) {
     /**
      * Returns all traits used by a class, its parent classes and trait of their traits.

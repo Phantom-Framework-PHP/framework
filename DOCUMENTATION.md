@@ -67,6 +67,9 @@ Welcome to the definitive technical manual for Phantom Framework (v1.14.3). This
     *   [Creating Jobs](#queue-jobs)
     *   [Dispatching](#queue-dispatch)
     *   [Drivers (Sync, Database)](#queue-drivers)
+15. [**Asset Management (Vite)**](#assets)
+    *   [Installation](#assets-install)
+    *   [Usage](#assets-usage)
 
 ---
 
@@ -637,3 +640,29 @@ dispatch(new ProcessPodcast($podcast));
 - **Sync:** Executes jobs immediately (default for development).
 - **Database:** Stores jobs in a database table to be processed by a worker.
 - **Redis:** High-performance queue driver using Redis lists.
+
+---
+
+<a name="assets"></a>
+## 15. Asset Management (Vite) (v1.14.8)
+
+Phantom integrates with **Vite** to provide a lightning-fast development experience and optimized production builds.
+
+<a name="assets-install"></a>
+### Installation
+You can initialize Vite in your project by creating a `vite.config.js` and installing the necessary dependencies:
+```bash
+npm install -D vite
+```
+
+<a name="assets-usage"></a>
+### Usage
+Use the `vite()` helper in your layouts to include your entry points:
+```html
+<head>
+    <?= vite(['resources/js/app.js', 'resources/css/app.css']) ?>
+</head>
+```
+
+- **In Development:** It automatically detects the Vite server and enables Hot Module Replacement (HMR).
+- **In Production:** It reads the `manifest.json` from `public/build` and injects the versioned files and their CSS dependencies.
