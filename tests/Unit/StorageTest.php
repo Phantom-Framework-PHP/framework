@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Phantom\Storage\StorageManager;
 use Phantom\Storage\LocalDisk;
 use Phantom\Storage\FtpDisk;
+use Phantom\Storage\S3Disk;
 use Phantom\Core\Application;
 use Phantom\Core\Container;
 
@@ -40,6 +41,23 @@ class StorageTest extends TestCase
         $disk = $manager->disk('test_ftp');
 
         $this->assertInstanceOf(FtpDisk::class, $disk);
+    }
+
+    public function test_storage_manager_can_resolve_s3_disk()
+    {
+        // Mock config for S3
+        config(['filesystems.disks.test_s3' => [
+            'driver' => 's3',
+            'key' => 'key',
+            'secret' => 'secret',
+            'region' => 'us-east-1',
+            'bucket' => 'test-bucket'
+        ]]);
+
+        $manager = new StorageManager();
+        $disk = $manager->disk('test_s3');
+
+        $this->assertInstanceOf(S3Disk::class, $disk);
     }
 
     public function test_local_disk_operations()

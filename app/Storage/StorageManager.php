@@ -48,6 +48,10 @@ class StorageManager
             return new FtpDisk($config);
         }
 
+        if ($config['driver'] === 's3') {
+            return new S3Disk($config);
+        }
+
         throw new Exception("Storage driver [{$config['driver']}] not supported yet.");
     }
 
