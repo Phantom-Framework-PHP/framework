@@ -1,4 +1,4 @@
-# Phantom Framework v1.14.9
+# Phantom Framework v1.15.1
 
 Phantom is a minimalist, elegant, and fast PHP framework, designed for developers seeking Laravel's structure with the lightness of a micro-framework.
 

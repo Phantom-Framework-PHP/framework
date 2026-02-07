@@ -131,6 +131,30 @@ class Builder
         return $collection;
     }
 
+    /**
+     * Get the query results as a plain collection without model hydration.
+     *
+     * @param  bool  $asArray
+     * @return \Phantom\Core\Collection
+     */
+    public function toPlainArray($asArray = false)
+    {
+        if ($this->useSoftDeletes) {
+            $this->where('deleted_at', 'IS', null);
+        }
+
+        $sql = $this->toSql();
+        $results = $this->db->select($sql, $this->bindings);
+
+        if ($asArray) {
+            $results = array_map(function($item) {
+                return (array) $item;
+            }, $results);
+        }
+
+        return new \Phantom\Core\Collection($results);
+    }
+
     public function first()
     {
         $this->limit(1);

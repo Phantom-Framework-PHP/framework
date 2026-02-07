@@ -52,4 +52,17 @@ class QueryBuilderTest extends TestCase
             ->where('id', 1)
             ->update(['name' => 'John', 'email' => 'john@example.com']);
     }
+
+    public function test_to_plain_array()
+    {
+        $mockResult = [(object)['id' => 1, 'name' => 'John']];
+        $this->db->expects($this->once())
+                 ->method('select')
+                 ->willReturn($mockResult);
+
+        $results = $this->builder->table('users')->toPlainArray();
+        
+        $this->assertInstanceOf(\Phantom\Core\Collection::class, $results);
+        $this->assertEquals(1, $results->first()->id);
+    }
 }

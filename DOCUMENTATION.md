@@ -348,6 +348,13 @@ $users = DB::table('users')
 ```
 Methods: `insert`, `update`, `delete`, `count`, `paginate`.
 
+**Fast Read-only Mode (v1.15.1):**
+For maximum performance in read-only operations, use `toPlainArray()`. This avoids Model hydration.
+```php
+$rawUsers = User::where('active', 1)->toPlainArray(); // Collection of stdClass
+$arrayUsers = User::all()->toPlainArray(true); // Collection of associative arrays
+```
+
 <a name="models"></a>
 ### Active Record Models
 Create with `php phantom make:model Post`.
