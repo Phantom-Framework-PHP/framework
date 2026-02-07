@@ -23,6 +23,14 @@ interface AIInterface
     public function generate(string $prompt, array $options = []): string;
 
     /**
+     * Generate vector embeddings for the given text.
+     *
+     * @param  string  $text
+     * @return array
+     */
+    public function embed(string $text): array;
+
+    /**
      * Get the underlying client instance.
      *
      * @return mixed

@@ -786,6 +786,9 @@ $response = ai()->generate("Explain quantum physics in 3 sentences.");
 
 // Chat interaction
 $reply = ai()->chat("Hello, how are you?");
+
+// Vector Embeddings (v1.16.4)
+$vector = ai()->embed("Phantom Framework is awesome.");
 ```
 
 ### Eloquent AI Trait (v1.16.2)

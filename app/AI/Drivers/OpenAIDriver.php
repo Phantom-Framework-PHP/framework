@@ -59,6 +59,39 @@ class OpenAIDriver implements AIInterface
         return $data['choices'][0]['message']['content'] ?? '';
     }
 
+    public function embed(string $text): array
+    {
+        $apiKey = $this->config['key'];
+        $model = $this->config['embedding_model'] ?? 'text-embedding-3-small';
+        $url = "https://api.openai.com/v1/embeddings";
+
+        $payload = [
+            'model' => $model,
+            'input' => $text
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err) {
+            throw new Exception("OpenAI Embedding Error: " . $err);
+        }
+
+        $data = json_decode($response, true);
+
+        return $data['data'][0]['embedding'] ?? [];
+    }
+
     public function getClient()
     {
         return $this;
