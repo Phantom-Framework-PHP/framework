@@ -84,6 +84,41 @@ class Validator
         return strlen($value) <= $max;
     }
 
+    /**
+     * Validate a field using AI.
+     * 
+     * @param string $field
+     * @param mixed $value
+     * @param array $params
+     * @return bool
+     */
+    protected function validateAi($field, $value, $params)
+    {
+        if (is_null($value) || $value === '') {
+            return true;
+        }
+
+        $type = $params[0] ?? 'moderation'; 
+        
+        $prompt = match($type) {
+            'spam' => "Is the following text spam? Answer only 'yes' or 'no': {$value}",
+            'moderation' => "Is the following text inappropriate, offensive or harmful? Answer only 'yes' or 'no': {$value}",
+            default => "Validate this text based on the criteria '{$type}'. Answer only 'passed' or 'failed': {$value}"
+        };
+
+        try {
+            $response = strtolower(trim(\Phantom\Core\Container::getInstance()->make('ai')->generate($prompt)));
+            
+            if ($type === 'spam' || $type === 'moderation') {
+                return str_contains($response, 'no');
+            }
+            
+            return str_contains($response, 'passed');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     protected function addError($field, $rule, $params)
     {
         $message = "The {$field} field failed the {$rule} validation.";

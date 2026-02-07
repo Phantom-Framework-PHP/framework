@@ -814,6 +814,16 @@ echo $post->translateAttribute('title', 'es');
 echo $post->askAI("What is the main topic of this post?");
 ```
 
+### Smart Validation (v1.16.3)
+Phantom includes AI-powered validation rules to moderate content and detect spam.
+
+```php
+$request->validate([
+    'content' => 'required|ai:moderation', // Detects harmful or inappropriate content
+    'email_body' => 'ai:spam',             // Detects spam patterns
+]);
+```
+
 <a name="ai-drivers"></a>
 ### Drivers
 - **Gemini:** Built-in support for Google's Gemini models via native cURL.
