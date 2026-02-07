@@ -633,7 +633,7 @@ dispatch(new ProcessPodcast($podcast));
 ```
 
 <a name="queue-drivers"></a>
-### Drivers (v1.14.4)
+### Drivers (v1.14.5)
 - **Sync:** Executes jobs immediately (default for development).
 - **Database:** Stores jobs in a database table to be processed by a worker.
-- **Redis:** (Planned) High-performance queue driver.
+- **Redis:** High-performance queue driver using Redis lists.

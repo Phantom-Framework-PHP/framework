@@ -54,6 +54,10 @@ class QueueManager
             );
         }
 
+        if ($driver === 'redis') {
+            return new RedisQueue($config);
+        }
+
         throw new Exception("Queue driver [{$driver}] not supported yet.");
     }
 
