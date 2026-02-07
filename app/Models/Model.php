@@ -17,6 +17,7 @@ abstract class Model implements JsonSerializable
     protected $casts = [];
     public $timestamps = true;
     protected $attributes = [];
+    protected $processedAttributes = [];
     protected $relations = [];
     protected $exists = false;
     public $wasRecentlyCreated = false;
@@ -57,6 +58,7 @@ abstract class Model implements JsonSerializable
         $model = new static;
 
         $model->attributes = $attributes;
+        $model->processedAttributes = [];
 
         $model->exists = $exists;
 
@@ -431,8 +433,10 @@ abstract class Model implements JsonSerializable
     {
         $value = $this->attributes[$key];
 
-        if ($this->hasCast($key)) {
-            return $this->castAttribute($key, $value);
+        if ($this->hasCast($key) && !isset($this->processedAttributes[$key])) {
+            $value = $this->castAttribute($key, $value);
+            $this->attributes[$key] = $value;
+            $this->processedAttributes[$key] = true;
         }
 
         return $value;
@@ -623,24 +627,88 @@ abstract class Model implements JsonSerializable
         return $builder->$method(...$args);
     }
 
-    public function jsonSerialize(): mixed
-    {
-        $attributes = $this->attributes;
+        public function toArray()
 
-        // 1. Process Appends (Accessors)
-        foreach ($this->appends as $key) {
-            $attributes[$key] = $this->$key;
+        {
+
+            $this->hydrateAll();
+
+            
+
+            $attributes = $this->attributes;
+
+    
+
+            // Process Appends
+
+            foreach ($this->appends as $key) {
+
+                $attributes[$key] = $this->$key;
+
+            }
+
+    
+
+            // Handle Visible/Hidden
+
+            if (!empty($this->visible)) {
+
+                return array_intersect_key($attributes, array_flip($this->visible));
+
+            }
+
+    
+
+            if (!empty($this->hidden)) {
+
+                return array_diff_key($attributes, array_flip($this->hidden));
+
+            }
+
+    
+
+            return $attributes;
+
         }
 
-        // 2. Handle Visible/Hidden
-        if (!empty($this->visible)) {
-            return array_intersect_key($attributes, array_flip($this->visible));
+    
+
+        /**
+
+         * Force hydration of all attributes.
+
+         * 
+
+         * @return void
+
+         */
+
+        protected function hydrateAll()
+
+        {
+
+            foreach (array_keys($this->casts) as $key) {
+
+                if (array_key_exists($key, $this->attributes)) {
+
+                    $this->getAttributeValue($key);
+
+                }
+
+            }
+
         }
 
-        if (!empty($this->hidden)) {
-            return array_diff_key($attributes, array_flip($this->hidden));
+    
+
+        public function jsonSerialize(): mixed
+
+        {
+
+            return $this->toArray();
+
         }
 
-        return $attributes;
     }
-}
+
+    
