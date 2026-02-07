@@ -12,7 +12,7 @@ class StorageManager
      * Get a storage disk instance.
      *
      * @param  string|null  $name
-     * @return LocalDisk
+     * @return DiskInterface
      */
     public function disk($name = null)
     {
@@ -29,7 +29,7 @@ class StorageManager
      * Resolve the storage disk.
      *
      * @param  string  $name
-     * @return LocalDisk
+     * @return DiskInterface
      * @throws Exception
      */
     protected function resolve($name)

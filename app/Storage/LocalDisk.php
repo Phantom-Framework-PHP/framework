@@ -2,7 +2,7 @@
 
 namespace Phantom\Storage;
 
-class LocalDisk
+class LocalDisk implements DiskInterface
 {
     protected $root;
 
@@ -17,7 +17,7 @@ class LocalDisk
 
     public function put($path, $contents)
     {
-        $fullPath = $this->root . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
+        $fullPath = $this->path($path);
         $directory = dirname($fullPath);
 
         if (!file_exists($directory)) {
@@ -29,7 +29,7 @@ class LocalDisk
 
     public function get($path)
     {
-        $fullPath = $this->root . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
+        $fullPath = $this->path($path);
         
         if (file_exists($fullPath)) {
             return file_get_contents($fullPath);
@@ -40,7 +40,7 @@ class LocalDisk
 
     public function delete($path)
     {
-        $fullPath = $this->root . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
+        $fullPath = $this->path($path);
         
         if (file_exists($fullPath)) {
             return unlink($fullPath);
@@ -51,6 +51,11 @@ class LocalDisk
 
     public function exists($path)
     {
-        return file_exists($this->root . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR));
+        return file_exists($this->path($path));
+    }
+
+    public function path($path)
+    {
+        return $this->root . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
     }
 }
