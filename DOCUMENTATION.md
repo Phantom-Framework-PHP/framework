@@ -319,6 +319,22 @@ Reuse views with `@include('partials.header', ['active' => 'home'])`.
 ### Configuration
 Configure database connections in `config/database.php`. Supports MySQL and SQLite.
 
+**Connection Pooling (v1.15.5):**
+Enable connection pooling for high-performance applications.
+```php
+'connections' => [
+    'mysql' => [
+        'driver' => 'mysql',
+        'host' => '127.0.0.1',
+        'pool' => [
+            'enabled' => true,
+            'max_connections' => 10,
+        ],
+    ],
+],
+```
+The framework will automatically manage and reuse connections from the pool.
+
 <a name="query-builder"></a>
 ### Query Builder
 Fluent interface for creating database queries.

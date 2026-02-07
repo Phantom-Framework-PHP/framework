@@ -16,6 +16,13 @@ class Database
     protected $pdo;
 
     /**
+     * The connection pool instance.
+     *
+     * @var ConnectionPool
+     */
+    protected $pool;
+
+    /**
      * Create a new Database instance.
      *
      * @param  array  $config
@@ -26,7 +33,14 @@ class Database
         $default = $config['default'];
         $connectionConfig = $config['connections'][$default];
 
-        $this->connect($connectionConfig);
+        if (isset($connectionConfig['pool']) && $connectionConfig['pool']['enabled']) {
+            $this->pool = new ConnectionPool(
+                $connectionConfig, 
+                $connectionConfig['pool']['max_connections'] ?? 5
+            );
+        } else {
+            $this->connect($connectionConfig);
+        }
     }
 
     /**
@@ -79,8 +93,14 @@ class Database
      */
     public function query($sql, $params = [])
     {
-        $statement = $this->pdo->prepare($sql);
+        $pdo = $this->getPdo();
+        $statement = $pdo->prepare($sql);
         $statement->execute($params);
+
+        if ($this->pool) {
+            $this->pool->releaseConnection($pdo);
+        }
+
         return $statement;
     }
 
@@ -93,7 +113,16 @@ class Database
      */
     public function select($sql, $params = [])
     {
-        return $this->query($sql, $params)->fetchAll();
+        $pdo = $this->getPdo();
+        $statement = $pdo->prepare($sql);
+        $statement->execute($params);
+        $results = $statement->fetchAll();
+
+        if ($this->pool) {
+            $this->pool->releaseConnection($pdo);
+        }
+
+        return $results;
     }
     
     /**
@@ -103,6 +132,10 @@ class Database
      */
     public function getPdo()
     {
+        if ($this->pool) {
+            return $this->pool->getConnection();
+        }
+
         return $this->pdo;
     }
 }
