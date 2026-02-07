@@ -55,6 +55,11 @@ class CacheManager
         return new FileStore($config['path']);
     }
 
+    protected function createRedisDriver(array $config)
+    {
+        return new RedisStore($config);
+    }
+
     /**
      * Pass methods to the default store.
      */
