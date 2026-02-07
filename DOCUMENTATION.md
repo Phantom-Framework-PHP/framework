@@ -335,6 +335,16 @@ Enable connection pooling for high-performance applications.
 ```
 The framework will automatically manage and reuse connections from the pool.
 
+**Transactions & Proactive Management (v1.15.6):**
+Phantom provides an elegant way to handle transactions while ensuring connections are proactively released back to the pool.
+```php
+DB::transaction(function($db) {
+    $db->table('users')->update(['status' => 'active']);
+    $db->table('logs')->insert(['action' => 'bulk_update']);
+});
+```
+The connection is automatically held for the duration of the transaction and released immediately after commit or rollback.
+
 <a name="query-builder"></a>
 ### Query Builder
 Fluent interface for creating database queries.

@@ -23,6 +23,13 @@ class Database
     protected $pool;
 
     /**
+     * The connection currently in use (for transactions or long scopes).
+     *
+     * @var PDO|null
+     */
+    protected $activeConnection;
+
+    /**
      * Create a new Database instance.
      *
      * @param  array  $config
@@ -94,14 +101,16 @@ class Database
     public function query($sql, $params = [])
     {
         $pdo = $this->getPdo();
-        $statement = $pdo->prepare($sql);
-        $statement->execute($params);
-
-        if ($this->pool) {
-            $this->pool->releaseConnection($pdo);
+        
+        try {
+            $statement = $pdo->prepare($sql);
+            $statement->execute($params);
+            return $statement;
+        } finally {
+            if ($this->pool && !$this->activeConnection) {
+                $this->pool->releaseConnection($pdo);
+            }
         }
-
-        return $statement;
     }
 
     /**
@@ -114,15 +123,16 @@ class Database
     public function select($sql, $params = [])
     {
         $pdo = $this->getPdo();
-        $statement = $pdo->prepare($sql);
-        $statement->execute($params);
-        $results = $statement->fetchAll();
 
-        if ($this->pool) {
-            $this->pool->releaseConnection($pdo);
+        try {
+            $statement = $pdo->prepare($sql);
+            $statement->execute($params);
+            return $statement->fetchAll();
+        } finally {
+            if ($this->pool && !$this->activeConnection) {
+                $this->pool->releaseConnection($pdo);
+            }
         }
-
-        return $results;
     }
     
     /**
@@ -132,10 +142,43 @@ class Database
      */
     public function getPdo()
     {
+        if ($this->activeConnection) {
+            return $this->activeConnection;
+        }
+
         if ($this->pool) {
             return $this->pool->getConnection();
         }
 
         return $this->pdo;
+    }
+
+    /**
+     * Run a callback within a database transaction.
+     *
+     * @param  callable  $callback
+     * @return mixed
+     * @throws \Throwable
+     */
+    public function transaction(callable $callback)
+    {
+        $pdo = $this->getPdo();
+        $this->activeConnection = $pdo;
+
+        $pdo->beginTransaction();
+
+        try {
+            $result = $callback($this);
+            $pdo->commit();
+            return $result;
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        } finally {
+            $this->activeConnection = null;
+            if ($this->pool) {
+                $this->pool->releaseConnection($pdo);
+            }
+        }
     }
 }
