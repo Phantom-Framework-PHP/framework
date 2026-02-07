@@ -788,6 +788,32 @@ $response = ai()->generate("Explain quantum physics in 3 sentences.");
 $reply = ai()->chat("Hello, how are you?");
 ```
 
+### Eloquent AI Trait (v1.16.2)
+You can add AI capabilities to your models by using the `HasAI` trait.
+
+```php
+namespace App\Models;
+
+use Phantom\Models\Model;
+use Phantom\Traits\HasAI;
+
+class Post extends Model
+{
+    use HasAI;
+}
+
+$post = Post::find(1);
+
+// Summarize content
+echo $post->summarize('content', sentences: 2);
+
+// Translate attribute
+echo $post->translateAttribute('title', 'es');
+
+// Custom AI query based on model data
+echo $post->askAI("What is the main topic of this post?");
+```
+
 <a name="ai-drivers"></a>
 ### Drivers
 - **Gemini:** Built-in support for Google's Gemini models via native cURL.
