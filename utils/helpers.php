@@ -259,6 +259,31 @@ if (! function_exists('__')) {
     }
 }
 
+if (! function_exists('set_locale')) {
+    /**
+     * Set the current locale.
+     *
+     * @param  string  $locale
+     * @return void
+     */
+    function set_locale($locale)
+    {
+        app('translator')->setLocale($locale);
+    }
+}
+
+if (! function_exists('get_locale')) {
+    /**
+     * Get the current locale.
+     *
+     * @return string
+     */
+    function get_locale()
+    {
+        return app('translator')->getLocale();
+    }
+}
+
 if (! function_exists('url')) {
     /**
      * Generate a url for the application.

@@ -122,6 +122,33 @@ class PaymentServiceProvider extends ServiceProvider {
 <a name="routing"></a>
 ## 2. Routing & HTTP
 
+...
+
+<a name="i18n"></a>
+## 16. Internationalization (v1.14.9)
+
+Phantom supports both PHP-based and JSON-based translation files.
+
+### PHP Translations
+Stored in `lang/{locale}/{file}.php`.
+Access: `__('messages.welcome')`
+
+### JSON Translations (v1.14.9)
+Stored in `lang/{locale}.json`. This is ideal for frontend-heavy applications or simple key-value pairs.
+```json
+{
+    "Welcome to our application": "Bienvenido a nuestra aplicación"
+}
+```
+Access: `__('Welcome to our application')`
+
+### Dynamic Locale Switching
+Change the application language at runtime:
+```php
+set_locale('es');
+echo get_locale(); // 'es'
+```
+
 <a name="routes"></a>
 ### Defining Routes
 Routes are defined in `routes/web.php`.

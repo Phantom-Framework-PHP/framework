@@ -25,12 +25,34 @@ class Translator
      */
     public function get($key, array $replace = [])
     {
+        if (strpos($key, '.') === false) {
+            return $this->getFromJson($key, $replace);
+        }
+
         [$file, $line] = $this->parseKey($key);
 
         $this->load($file);
 
         $translation = $this->lines[$this->locale][$file][$line] 
                     ?? $this->lines[$this->fallback][$file][$line] 
+                    ?? $this->getFromJson($key, $replace);
+
+        return $this->makeReplacements($translation, $replace);
+    }
+
+    /**
+     * Get the translation from JSON files.
+     *
+     * @param  string  $key
+     * @param  array   $replace
+     * @return string
+     */
+    protected function getFromJson($key, array $replace = [])
+    {
+        $this->loadJson();
+
+        $translation = $this->lines[$this->locale]['__json'][$key]
+                    ?? $this->lines[$this->fallback]['__json'][$key]
                     ?? $key;
 
         return $this->makeReplacements($translation, $replace);
@@ -56,6 +78,29 @@ class Translator
                 $this->lines[$locale][$file] = require $path;
             } else {
                 $this->lines[$locale][$file] = [];
+            }
+        }
+    }
+
+    /**
+     * Load the JSON translation file.
+     *
+     * @return void
+     */
+    protected function loadJson()
+    {
+        if (isset($this->lines[$this->locale]['__json'])) {
+            return;
+        }
+
+        $locales = array_unique([$this->locale, $this->fallback]);
+
+        foreach ($locales as $locale) {
+            $path = "{$this->path}/{$locale}.json";
+            if (file_exists($path)) {
+                $this->lines[$locale]['__json'] = json_decode(file_get_contents($path), true) ?? [];
+            } else {
+                $this->lines[$locale]['__json'] = [];
             }
         }
     }
@@ -94,5 +139,10 @@ class Translator
     public function setLocale($locale)
     {
         $this->locale = $locale;
+    }
+
+    public function getLocale()
+    {
+        return $this->locale;
     }
 }
