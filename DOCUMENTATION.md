@@ -58,6 +58,10 @@ Welcome to the definitive technical manual for Phantom Framework (v1.12.7). This
 12. [**Phantom CLI**](#cli)
     *   [Tinker (REPL)](#tinker)
     *   [Generators](#generators)
+13. [**File Storage**](#storage)
+    *   [Configuration](#storage-config)
+    *   [Basic Usage](#storage-usage)
+    *   [Drivers (Local, FTP)](#storage-drivers)
 
 ---
 
@@ -507,19 +511,58 @@ $this->post('/api/user', $data)->assertJson(['created' => true]);
 <a name="cli"></a>
 ## 12. Phantom CLI
 
-The `phantom` binary is located in the root directory.
+...
 
-<a name="tinker"></a>
-### Tinker (REPL)
-Interactive shell to test code: `php phantom tinker`.
+<a name="storage"></a>
+## 13. File Storage (v1.14)
 
-<a name="generators"></a>
-### Generators
-- `make:model`
-- `make:controller`
-- `make:migration`
-- `make:seeder`
-- `make:middleware`
-- `make:resource`
-- `make:observer`
-- `make:command`
+Phantom provides a powerful file storage abstraction, allowing you to swap storage backends without changing your application logic.
+
+<a name="storage-config"></a>
+### Configuration
+Configure your disks in `config/filesystems.php`.
+```php
+'disks' => [
+    'local' => [
+        'driver' => 'local',
+        'root' => storage_path('app'),
+    ],
+    'ftp' => [
+        'driver' => 'ftp',
+        'host' => 'ftp.example.com',
+        'username' => 'user',
+        'password' => 'password',
+        'root' => '/public_html',
+    ],
+],
+```
+
+<a name="storage-usage"></a>
+### Basic Usage
+Use the `storage()` helper or `StorageManager`.
+```php
+// Store content
+storage()->put('file.txt', 'Contents');
+
+// Retrieve content
+$content = storage()->get('file.txt');
+
+// Check existence
+if (storage()->exists('file.txt')) {
+    // ...
+}
+
+// Delete file
+storage()->delete('file.txt');
+```
+
+<a name="storage-drivers"></a>
+### Drivers (v1.14.2)
+- **Local:** Stores files on the local server.
+- **FTP:** Stores files on a remote FTP server.
+- **S3:** (Planned) AWS S3 storage.
+
+Specify a disk:
+```php
+storage('ftp')->put('remote-file.txt', 'Content');
+```

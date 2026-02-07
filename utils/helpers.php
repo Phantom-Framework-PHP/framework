@@ -36,9 +36,9 @@ if (! function_exists('env')) {
 
 if (! function_exists('config')) {
     /**
-     * Get the specified configuration value.
+     * Get / set the specified configuration value.
      *
-     * @param  string|null  $key
+     * @param  string|array|null  $key
      * @param  mixed  $default
      * @return mixed|\Phantom\Core\Config
      */
@@ -46,6 +46,13 @@ if (! function_exists('config')) {
     {
         if (is_null($key)) {
             return app('config');
+        }
+
+        if (is_array($key)) {
+            foreach ($key as $k => $v) {
+                app('config')->set($k, $v);
+            }
+            return null;
         }
 
         return app('config')->get($key, $default);

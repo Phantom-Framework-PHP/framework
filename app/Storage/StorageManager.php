@@ -44,6 +44,10 @@ class StorageManager
             return new LocalDisk($config['root']);
         }
 
+        if ($config['driver'] === 'ftp') {
+            return new FtpDisk($config);
+        }
+
         throw new Exception("Storage driver [{$config['driver']}] not supported yet.");
     }
 
