@@ -87,6 +87,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
 20. [**Security Shield (IP Reputation) (v1.17.2)**](#shield)
 21. [**Hybrid Engine (RoadRunner/Swoole) (v1.17.4)**](#hybrid)
 22. [**Phantom Live (Reactive Components) (v1.18.0)**](#live)
+23. [**API Auto-Documentation (AI) (v1.19.0)**](#api-doc)
 
 ---
 
@@ -1074,6 +1075,29 @@ Ensure you include the Phantom Live JavaScript bridge in your master layout:
 ```html
 <script src="/assets/phantom-live.js" defer></script>
 ```
+
+<a name="api-doc"></a>
+## 23. API Auto-Documentation (AI) (v1.19.0)
+
+Phantom can automatically document your API by analyzing your routes and controller source code using AI.
+
+### Usage
+Run the following command to generate an OpenAPI 3.0 specification:
+```bash
+php phantom api:doc
+```
+The command will:
+1. Scan all non-framework routes.
+2. Analyze the controller methods using your default AI driver.
+3. Generate a `public/swagger.json` file.
+
+### Customization
+The AI analysis automatically picks up:
+- Route parameters.
+- Summaries and descriptions based on logic.
+- Expected responses.
+- Validation rules from `$request->validate()`.
+
 
 
 

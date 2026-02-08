@@ -309,4 +309,20 @@ class Router
             require $path;
         }
     }
+
+    /**
+     * Get all registered routes.
+     * 
+     * @return array
+     */
+    public function getRoutes()
+    {
+        $all = [];
+        foreach ($this->routes as $method => $routes) {
+            foreach ($routes as $uri => $route) {
+                $all[] = $route;
+            }
+        }
+        return $all;
+    }
 }
