@@ -67,4 +67,13 @@ return [
         \Phantom\Providers\AuthServiceProvider::class,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Framework Features
+    |--------------------------------------------------------------------------
+    */
+
+    'pulse_enabled' => (bool) Env::get('PULSE_ENABLED', true),
+    'live_enabled'  => (bool) Env::get('LIVE_ENABLED', true),
+
 ];

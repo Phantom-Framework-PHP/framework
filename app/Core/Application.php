@@ -14,7 +14,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.18.0';
+    const VERSION = '1.18.1';
 
     /**
      * The base path for the Phantom installation.
@@ -201,10 +201,38 @@ class Application extends Container
             $provider->boot();
         }
 
-        // Load routes
-        $this->make('router')->loadRoutes($this->basePath . '/routes/web.php');
+        $router = $this->make('router');
+
+        // Register Internal Framework Routes
+        $this->registerInternalRoutes($router);
+
+        // Load user routes
+        $router->loadRoutes($this->basePath . '/routes/web.php');
 
         $this->booted = true;
+    }
+
+    /**
+     * Register internal framework routes based on configuration.
+     * 
+     * @param \Phantom\Core\Router $router
+     * @return void
+     */
+    protected function registerInternalRoutes($router)
+    {
+        // Phantom Pulse
+        if (config('app.pulse_enabled', true)) {
+            $router->group(['prefix' => 'phantom/pulse'], function($router) {
+                $router->get('/', [\Phantom\Http\Controllers\PulseController::class, 'index']);
+                $router->post('/clear', [\Phantom\Http\Controllers\PulseController::class, 'clear']);
+                $router->post('/reset-ip', [\Phantom\Http\Controllers\PulseController::class, 'resetIp']);
+            });
+        }
+
+        // Phantom Live
+        if (config('app.live_enabled', true)) {
+            $router->post('/phantom/live/update', [\Phantom\Http\Controllers\LiveController::class, 'update']);
+        }
     }
 
     /**
