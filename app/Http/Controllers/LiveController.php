@@ -44,7 +44,8 @@ class LiveController extends Controller
                 'html' => $instance->output(),
                 'state' => base64_encode(json_encode($instance->getState())),
                 'errors' => $instance->getErrors(),
-                'events' => $instance->getEmittedEvents()
+                'events' => $instance->getEmittedEvents(),
+                'redirect' => $instance->getRedirect()
             ]);
 
         } catch (Throwable $e) {
@@ -54,7 +55,8 @@ class LiveController extends Controller
                     'html' => $instance->output(),
                     'state' => base64_encode(json_encode($instance->getState())),
                     'errors' => $instance->getErrors(),
-                    'events' => $instance->getEmittedEvents()
+                    'events' => $instance->getEmittedEvents(),
+                    'redirect' => $instance->getRedirect()
                 ]);
             }
 

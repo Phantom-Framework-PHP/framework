@@ -12,10 +12,24 @@ abstract class Component
     protected $errors = [];
     protected $emittedEvents = [];
     protected $listeners = []; // ['eventName' => 'methodName']
+    protected $redirectTo;
 
     public function mount() {}
 
     abstract public function render();
+
+    /**
+     * Redirect the user to a different URL.
+     */
+    public function redirect($url)
+    {
+        $this->redirectTo = $url;
+    }
+
+    public function getRedirect()
+    {
+        return $this->redirectTo;
+    }
 
     /**
      * Emit an event to be handled by other components or JS.

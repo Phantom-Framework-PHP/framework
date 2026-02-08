@@ -1009,6 +1009,22 @@ Components can communicate using events:
 - **Emitting:** `$this->emit('postAdded', $postId);`
 - **Listening:** Define a `protected $listeners = ['postAdded' => 'refresh'];` property in your component.
 
+### File Uploads (v1.18.5)
+You can handle file uploads reactively. Simply bind a file input:
+```html
+<input type="file" ph-model="photo">
+```
+The file will be available in the component via standard PHP `$_FILES` during the action execution.
+
+### Redirects (v1.18.5)
+You can redirect the user from within a component method:
+```php
+public function save() {
+    // ... logic ...
+    $this->redirect('/dashboard');
+}
+```
+
 ### Installation
 Ensure you include the Phantom Live JavaScript bridge in your master layout:
 ```html

@@ -16,14 +16,17 @@ document.addEventListener('input', e => {
     const component = el.closest('[data-live-component]');
     if (!component) return;
     const property = el.getAttribute('ph-model');
-    const state = JSON.parse(atob(component.getAttribute('data-live-state')));
-    state[property] = el.value;
-    component.setAttribute('data-live-state', btoa(JSON.stringify(state)));
+    
+    // For normal inputs, update state immediately
+    if (el.type !== 'file') {
+        const state = JSON.parse(atob(component.getAttribute('data-live-state')));
+        state[property] = el.value;
+        component.setAttribute('data-live-state', btoa(JSON.stringify(state)));
+    }
 });
 
 function initializeLiveComponents() {
     document.querySelectorAll('[data-live-component]').forEach(component => {
-        // Handle Polling
         const poll = component.querySelector('[ph-poll]');
         if (poll && !component.dataset.pollingSet) {
             const ms = poll.getAttribute('ph-poll') || 5000;
@@ -33,9 +36,6 @@ function initializeLiveComponents() {
     });
 }
 
-/**
- * Global Event Dispatcher for Inter-component communication
- */
 window.PhantomLive = {
     emit(event, params = []) {
         document.querySelectorAll('[data-live-component]').forEach(component => {
@@ -56,17 +56,37 @@ async function updateLiveComponent(component, action = null, params = []) {
     loaders.forEach(l => l.style.display = 'block');
 
     try {
+        // Build request body (FormData to support files)
+        const formData = new FormData();
+        formData.append('component', name);
+        formData.append('id', id);
+        formData.append('state', state);
+        if (action) formData.append('action', action);
+        if (params.length) formData.append('params', JSON.stringify(params));
+
+        // Attach files if any
+        component.querySelectorAll('input[type="file"][ph-model]').forEach(fileInput => {
+            if (fileInput.files.length > 0) {
+                formData.append(fileInput.getAttribute('ph-model'), fileInput.files[0]);
+            }
+        });
+
         const response = await fetch('/phantom/live/update', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ component: name, id, state, action, params })
+            body: formData
         });
 
         const data = await response.json();
         if (data.error) return console.error('Phantom Live Error:', data.error);
+
+        // Handle Redirect
+        if (data.redirect) {
+            window.location.href = data.redirect;
+            return;
+        }
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.html, 'text/html');
@@ -75,7 +95,6 @@ async function updateLiveComponent(component, action = null, params = []) {
         morph(component, newNode);
         component.setAttribute('data-live-state', data.state);
         
-        // Trigger emitted events
         if (data.events) {
             data.events.forEach(e => window.PhantomLive.emit(e.event, e.params));
         }
