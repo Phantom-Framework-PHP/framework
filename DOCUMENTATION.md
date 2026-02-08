@@ -948,6 +948,12 @@ while ($req = $roadRunner->acceptRequest()) {
 
 Phantom Live allows you to build dynamic, reactive interfaces using only PHP and Blade-like templates. It handles DOM updates via AJAX, eliminating the need for custom JavaScript for common UI interactions.
 
+### Smart DOM Morphing (v1.18.3)
+Phantom Live uses a lightweight diffing algorithm to update only the parts of the DOM that have changed. This ensures that:
+- Input focus is preserved while typing.
+- Cursor positions and scroll states remain intact.
+- UI transitions feel smooth and non-destructive.
+
 ### Creating a Component
 Run `php phantom make:live Counter`. This generates a class in `app/Live/Components` and a view in `resources/views/live`.
 
