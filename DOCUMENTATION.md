@@ -86,6 +86,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
 19. [**Observability (Phantom Pulse) (v1.17.1)**](#pulse)
 20. [**Security Shield (IP Reputation) (v1.17.2)**](#shield)
 21. [**Hybrid Engine (RoadRunner/Swoole) (v1.17.4)**](#hybrid)
+22. [**Phantom Live (Reactive Components) (v1.18.0)**](#live)
 
 ---
 
@@ -941,5 +942,52 @@ while ($req = $roadRunner->acceptRequest()) {
     $roadRunner->respond($response);
 }
 ```
+
+<a name="live"></a>
+## 22. Phantom Live (Reactive Components) (v1.18.0)
+
+Phantom Live allows you to build dynamic, reactive interfaces using only PHP and Blade-like templates. It handles DOM updates via AJAX, eliminating the need for custom JavaScript for common UI interactions.
+
+### Creating a Component
+Run `php phantom make:live Counter` (planned command) or manually create a class in `app/Live/Components`:
+
+```php
+namespace App\Live\Components;
+use Phantom\Live\Component;
+
+class Counter extends Component {
+    public $count = 0;
+
+    public function increment() {
+        $this->count++;
+    }
+
+    public function render() {
+        return '
+            <div>
+                <span>Count: ' . $this->count . '</span>
+                <button ph-click="increment">+</button>
+            </div>
+        ';
+    }
+}
+```
+
+### Rendering in Views
+Use the `@live` directive in your views:
+```php
+@live('Counter', ['count' => 10])
+```
+
+### Directives
+- `ph-click="methodName"`: Calls a public method on the component when the element is clicked.
+- `ph-model="propertyName"`: Synchronizes the element's value (input/select) with a public property in the component.
+
+### Installation
+Ensure you include the Phantom Live JavaScript bridge in your master layout:
+```html
+<script src="/assets/phantom-live.js" defer></script>
+```
+
 
 

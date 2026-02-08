@@ -75,6 +75,22 @@ class Compiler
         $this->content = preg_replace_callback('/@include\s*\(\'(.+?)\'\)/', function($m) {
             return "<?php echo \Phantom\View\View::make('" . $m[1] . "', get_defined_vars())->render(); ?>";
         }, $this->content);
+
+        // @live
+        $this->content = preg_replace_callback('/@live\s*\(\'(.+?)\'(?:,\s*(.+?))?\)/', function($m) {
+            $name = $m[1];
+            $params = $m[2] ?? '[]';
+            return "<?php 
+                \$componentClass = 'Phantom\\\\Live\\\\Components\\\\' . str_replace('.', '\\\\', '{$name}');
+                if(!class_exists(\$componentClass)) {
+                    \$componentClass = 'App\\\\Live\\\\Components\\\\' . str_replace('.', '\\\\', '{$name}');
+                }
+                \$instance = new \$componentClass();
+                \$instance->id = uniqid('live-');
+                \$instance->fill({$params});
+                echo \$instance->output();
+            ?>";
+        }, $this->content);
     }
 
     protected function compileInheritance()

@@ -34,3 +34,6 @@ $router->group(['prefix' => 'phantom/pulse'], function($router) {
     $router->post('/clear', [\Phantom\Http\Controllers\PulseController::class, 'clear']);
     $router->post('/reset-ip', [\Phantom\Http\Controllers\PulseController::class, 'resetIp']);
 });
+
+// Phantom Live Routes
+$router->post('/phantom/live/update', [\Phantom\Http\Controllers\LiveController::class, 'update']);
