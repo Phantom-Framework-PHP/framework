@@ -1,4 +1,4 @@
-# Phantom Framework v1.16.4
+# Phantom Framework v1.19.5
 
 Phantom is a minimalist, elegant, and fast PHP framework, designed for developers seeking Laravel's structure with the lightness of a micro-framework.
 
@@ -37,19 +37,20 @@ Our [Documentation Manual](DOCUMENTATION.md) covers everything you need to maste
 
 - **📦 IoC Container**: Professional and powerful dependency management.
 - **🛣️ Advanced Routing**: Route Groups, Named Routes, Middlewares, and **Method Injection**.
-- **🎨 View Engine**: Blade-like template system with layouts, components, and caching (v1.10).
-- **🗄️ Phantom ORM**: Active Record with Eager Loading, Relationships, Polymorphism, Soft Deletes, **Attribute Casting, and Mass Assignment Protection (v1.13)**.
-- **🛡️ Native Security**: CSRF protection, data validation, and secure hashing (Argon2/Bcrypt).
-- **🌐 Internationalization**: Built-in multi-language support (i18n).
-- **✉️ Mail System**: Integrated and easy-to-use email sending system.
-- **📁 File Storage**: File management with advanced security validation (MIME + Magic Numbers).
-- **🌱 Seeders & Factories**: System for populating the database with test data.
-- **📝 Advanced Logging**: Automatic error recording in local logs.
-- **🎨 Elegant Error Handling**: Custom Tailwind CSS error views and refined debug mode.
+- **🎨 View Engine**: Blade-like template system with layouts, components, and caching.
+- **🗄️ Phantom ORM**: Active Record with Eager Loading, Relationships, Polymorphism, Soft Deletes, **Attribute Casting, and Mass Assignment Protection**.
+- **🏢 Multi-Tenancy Core (v1.19.3)**: Native support for database and scope isolation (shared or separate DBs).
+- **⏱️ Rate Limiting Pro (v1.19.4)**: Distributed sliding window algorithm for precise request throttling.
+- **⚡ Distributed Cache (v1.19.5)**: High-performance caching with Redis Cluster support and automatic tenant isolation.
+- **🤖 AI Native Integration**: Built-in support for Gemini/OpenAI, Vector Embeddings, and AI-powered validation.
+- **📟 Phantom Live**: Build reactive, dynamic interfaces with PHP and Blade (Livewire-style).
+- **📊 Phantom Pulse**: Real-time telemetry dashboard for requests, DB queries, and security.
+- **🛡️ Native Security**: Zero-config Security Shield (IP Reputation), CSRF protection, and secure hashing.
+- **📁 File Storage**: Abstracted storage with Local, FTP, and S3 drivers.
+- **📦 Distributed Queues**: Background job processing with Redis Cluster and Sentinel support.
+- **📝 API Auto-Doc**: Generate OpenAPI/Swagger documentation automatically using AI.
 - **🧪 Testing Suite**: Built-in system for HTTP Feature Testing and unit tests.
-- **💻 Phantom CLI**: Professional toolkit including `serve`, `migrate`, and `tinker` REPL.
-- **📦 Modern Tools**: Native Fluent Collections, API Resources, and Request Validation.
-- **⏱️ Smart Timestamps**: Automatic `created_at` and `updated_at` management for models.
+- **💻 Phantom CLI**: Professional toolkit including `serve`, `migrate`, `tinker`, and `ai:generate`.
 
 ## Requirements
 
