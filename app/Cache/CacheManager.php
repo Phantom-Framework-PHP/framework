@@ -22,7 +22,18 @@ class CacheManager
             $this->stores[$name] = $this->createStore($name);
         }
 
-        return $this->stores[$name];
+        $store = $this->stores[$name];
+
+        // Apply Tenant Isolation if available
+        if (app()->has('tenant') && app('tenant')->hasTenant()) {
+            $tenantId = app('tenant')->getTenantId();
+            if (method_exists($store, 'setPrefix')) {
+                $basePrefix = config("cache.stores.{$name}.prefix", 'phantom:');
+                $store->setPrefix($basePrefix . "tenant:{$tenantId}:");
+            }
+        }
+
+        return $store;
     }
 
     /**

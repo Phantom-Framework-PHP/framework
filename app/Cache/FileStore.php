@@ -5,6 +5,7 @@ namespace Phantom\Cache;
 class FileStore
 {
     protected $directory;
+    protected $prefix = '';
 
     public function __construct($directory)
     {
@@ -16,6 +17,17 @@ class FileStore
     }
 
     /**
+     * Set the cache key prefix.
+     *
+     * @param  string  $prefix
+     * @return void
+     */
+    public function setPrefix($prefix)
+    {
+        $this->prefix = $prefix;
+    }
+
+    /**
      * Retrieve an item from the cache by key.
      *
      * @param  string  $key
@@ -23,7 +35,7 @@ class FileStore
      */
     public function get($key)
     {
-        $path = $this->path($key);
+        $path = $this->path($this->prefix . $key);
 
         if (!file_exists($path)) {
             return null;
@@ -57,7 +69,7 @@ class FileStore
             'expiration' => $expiration
         ]);
 
-        return file_put_contents($this->path($key), $data) !== false;
+        return file_put_contents($this->path($this->prefix . $key), $data) !== false;
     }
 
     /**
@@ -68,7 +80,7 @@ class FileStore
      */
     public function forget($key)
     {
-        $path = $this->path($key);
+        $path = $this->path($this->prefix . $key);
         
         if (file_exists($path)) {
             return unlink($path);

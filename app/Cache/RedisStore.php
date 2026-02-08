@@ -2,36 +2,46 @@
 
 namespace Phantom\Cache;
 
-use Redis;
+use Phantom\Redis\RedisFactory;
 use Exception;
 
 class RedisStore
 {
+    /**
+     * The Redis instance.
+     *
+     * @var \Redis|\RedisCluster
+     */
     protected $redis;
+
+    /**
+     * The cache key prefix.
+     *
+     * @var string
+     */
     protected $prefix;
 
+    /**
+     * Create a new RedisStore instance.
+     *
+     * @param  array  $config
+     * @return void
+     */
     public function __construct(array $config)
     {
-        if (!class_exists('Redis')) {
-            throw new Exception("Redis extension not found.");
-        }
-
-        $this->redis = new Redis();
-        $this->redis->connect(
-            $config['host'] ?? '127.0.0.1',
-            $config['port'] ?? 6379,
-            $config['timeout'] ?? 0.0
-        );
-
-        if (isset($config['password']) && $config['password']) {
-            $this->redis->auth($config['password']);
-        }
-
-        if (isset($config['database'])) {
-            $this->redis->select($config['database']);
-        }
-
+        $this->redis = RedisFactory::make($config);
         $this->prefix = $config['prefix'] ?? 'phantom:';
+    }
+
+    /**
+     * Set the cache key prefix.
+     *
+     * @param  string  $prefix
+     * @return void
+     */
+    public function setPrefix($prefix)
+    {
+        $this->prefix = $prefix;
     }
 
     /**

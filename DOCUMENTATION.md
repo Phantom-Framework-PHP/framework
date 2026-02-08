@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.19.4). This document covers the entire ecosystem, from the core architecture to the latest AI features.
+Welcome to the definitive technical manual for Phantom Framework (v1.19.5). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 
@@ -400,6 +400,12 @@ For maximum performance in read-only operations, use `toPlainArray()`. This avoi
 $rawUsers = User::where('active', 1)->toPlainArray(); // Collection of stdClass
 $arrayUsers = User::all()->toPlainArray(true); // Collection of associative arrays
 ```
+
+### Redis Cache Cluster (v1.19.5)
+The cache system now supports Redis Clusters via the `RedisFactory`. Configure your clusters in `config/cache.php`.
+
+### Multi-Tenant Isolation (v1.19.5)
+When a tenant is active, all cache keys are automatically prefixed with `tenant:{id}:` to prevent data leakage between customers. This works across all drivers (File, Redis).
 
 <a name="models"></a>
 ### Active Record Models
