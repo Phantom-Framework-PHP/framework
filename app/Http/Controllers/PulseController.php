@@ -4,19 +4,23 @@ namespace Phantom\Http\Controllers;
 
 use Phantom\Http\Response;
 use Phantom\Security\Shield;
+use Phantom\Services\PulseService;
 
 class PulseController extends Controller
 {
+    protected $pulse;
+
+    public function __construct()
+    {
+        $this->pulse = new PulseService();
+    }
+
     public function index()
     {
-        // Fetch Request History
-        $pulsePath = storage_path('framework/pulse.json');
-        $history = [];
-        if (file_exists($pulsePath)) {
-            $history = json_decode(file_get_contents($pulsePath), true) ?: [];
-        }
+        // Fetch Request History using Service
+        $history = $this->pulse->getEntries();
 
-        // Fetch Security Data
+        // Fetch Security Data (Still JSON for now)
         $shieldPath = storage_path('framework/shield.json');
         $security = [];
         if (file_exists($shieldPath)) {
@@ -32,11 +36,7 @@ class PulseController extends Controller
 
     public function clear()
     {
-        $path = storage_path('framework/pulse.json');
-        if (file_exists($path)) {
-            unlink($path);
-        }
-
+        $this->pulse->clear();
         return redirect('/phantom/pulse');
     }
 

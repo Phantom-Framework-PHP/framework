@@ -859,6 +859,11 @@ Phantom Pulse is a lightweight telemetry system designed to monitor the performa
 ### Usage
 Phantom Pulse is automatically enabled when `APP_DEBUG=true` is set in your `.env` file.
 
+**Storage Drivers (v1.17.6):**
+You can configure the storage backend in `config/app.php` using the `pulse_driver` option:
+- `json` (Default): Lightweight, no dependencies. Stores last 50 entries.
+- `sqlite`: Recommended for performance. Stores last 100 entries in a dedicated database.
+
 **Dashboard:**
 Access the performance dashboard at: `your-app.test/phantom/pulse`
 

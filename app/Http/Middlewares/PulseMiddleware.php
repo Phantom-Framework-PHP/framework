@@ -22,7 +22,7 @@ class PulseMiddleware
         $memory = round(memory_get_peak_usage() / 1024 / 1024, 2);
         $queries = Database::getQueryLog();
 
-        $this->storePulseData([
+        (new \Phantom\Services\PulseService())->record([
             'url' => $request->getPath(),
             'method' => $request->getMethod(),
             'duration' => $duration,
@@ -33,25 +33,5 @@ class PulseMiddleware
         ]);
 
         return $response;
-    }
-
-    protected function storePulseData(array $data)
-    {
-        $path = storage_path('framework/pulse.json');
-        
-        if (!file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-
-        $history = [];
-        if (file_exists($path)) {
-            $history = json_decode(file_get_contents($path), true) ?: [];
-        }
-
-        // Mantener solo los últimos 50 registros
-        array_unshift($history, $data);
-        $history = array_slice($history, 0, 50);
-
-        file_put_contents($path, json_encode($history, JSON_PRETTY_PRINT));
     }
 }
