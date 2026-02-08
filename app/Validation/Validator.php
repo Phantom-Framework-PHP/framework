@@ -110,7 +110,17 @@ class Validator
             $response = strtolower(trim(\Phantom\Core\Container::getInstance()->make('ai')->generate($prompt)));
             
             if ($type === 'spam' || $type === 'moderation') {
-                return str_contains($response, 'no');
+                $passed = str_contains($response, 'no');
+                
+                if (!$passed) {
+                    event('ai.validation.failed', [
+                        'type' => $type,
+                        'value' => $value,
+                        'ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+                    ]);
+                }
+                
+                return $passed;
             }
             
             return str_contains($response, 'passed');

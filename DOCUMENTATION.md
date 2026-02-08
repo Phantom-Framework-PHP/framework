@@ -882,6 +882,7 @@ Phantom Security Shield is an automated defense system that protects your applic
 ### How it works
 The Shield assigns "Risk Points" to IP addresses based on their activity:
 - **404 Errors:** +10 points per occurrence.
+- **AI Validation Failures (v1.17.5):** +50 points when `ai:moderation` or `ai:spam` rules fail.
 - **Threshold:** Once an IP reaches 100 points, it is automatically blocked for 60 minutes.
 - **Decay:** Risk points automatically expire after 60 minutes of inactivity.
 

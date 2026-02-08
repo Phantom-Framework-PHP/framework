@@ -72,5 +72,10 @@ class AppServiceProvider extends ServiceProvider
         
         $router->use(\Phantom\Http\Middlewares\ShieldMiddleware::class);
         $router->use(\Phantom\Http\Middlewares\PulseMiddleware::class);
+
+        // AI-Powered Shield: Listen for AI validation failures
+        $this->app->make('events')->listen('ai.validation.failed', function($data) {
+            (new \Phantom\Security\Shield())->recordRisk($data['ip'], 50);
+        });
     }
 }
