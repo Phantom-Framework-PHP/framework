@@ -95,6 +95,37 @@ class Database
     }
 
     /**
+     * Disconnect from the current database.
+     *
+     * @return void
+     */
+    public function disconnect()
+    {
+        $this->pdo = null;
+        $this->pool = null;
+    }
+
+    /**
+     * Reconnect to a database with a specific configuration.
+     *
+     * @param  array  $config
+     * @return void
+     */
+    public function reconnect(array $config)
+    {
+        $this->disconnect();
+
+        if (isset($config['pool']) && $config['pool']['enabled']) {
+            $this->pool = new ConnectionPool(
+                $config, 
+                $config['pool']['max_connections'] ?? 5
+            );
+        } else {
+            $this->connect($config);
+        }
+    }
+
+    /**
      * Get a query builder instance for a table.
      *
      * @param  string  $table

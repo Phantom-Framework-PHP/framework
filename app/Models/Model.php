@@ -31,7 +31,31 @@ abstract class Model implements JsonSerializable
 
     public function __construct(array $attributes = [])
     {
+        $this->bootTraits();
         $this->fill($attributes);
+    }
+
+    /**
+     * Boot the model and its traits.
+     * 
+     * @return void
+     */
+    protected function bootTraits()
+    {
+        $class = static::class;
+        $traits = class_uses_recursive($class);
+
+        foreach ($traits as $trait) {
+            $method = 'boot' . class_basename($trait);
+            if (method_exists($class, $method)) {
+                forward_static_call([$class, $method]);
+            }
+
+            $method = 'initialize' . class_basename($trait);
+            if (method_exists($this, $method)) {
+                $this->$method();
+            }
+        }
     }
 
     /**
@@ -234,9 +258,16 @@ abstract class Model implements JsonSerializable
             ->table($instance->getTable())
             ->setModelClass(static::class);
         
+        $traits = class_uses_recursive(static::class);
+
         // Detect SoftDeletes trait
-        if (in_array(\Phantom\Traits\SoftDeletes::class, class_uses_recursive(static::class))) {
+        if (in_array(\Phantom\Traits\SoftDeletes::class, $traits)) {
             $builder->useSoftDeletes();
+        }
+
+        // Detect BelongsToTenant trait
+        if (in_array(\Phantom\Traits\BelongsToTenant::class, $traits)) {
+            $builder->tenant();
         }
 
         return $builder;

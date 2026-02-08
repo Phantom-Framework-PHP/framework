@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This document covers the entire ecosystem, from the core architecture to the latest AI features.
+Welcome to the definitive technical manual for Phantom Framework (v1.19.3). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 
@@ -88,6 +88,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
 21. [**Hybrid Engine (RoadRunner/Swoole) (v1.17.4)**](#hybrid)
 22. [**Phantom Live (Reactive Components) (v1.18.0)**](#live)
 23. [**API Auto-Documentation (AI) (v1.19.0)**](#api-doc)
+24. [**Multi-Tenancy Core (v1.19.3)**](#multi-tenancy)
 
 ---
 
@@ -1106,6 +1107,54 @@ The dashboard uses **Swagger UI** to allow you to:
 - View request/response models.
 - **Try it out:** Execute real API calls directly from the browser.
 - Automatically handles CSRF via the `X-CSRF-TOKEN` header.
+
+<a name="multi-tenancy"></a>
+## 24. Multi-Tenancy Core (v1.19.3)
+
+Phantom Framework provides native support for building multi-tenant applications using either **Scope Isolation** (sharing a database with a `tenant_id` column) or **Database Isolation** (separate databases per tenant).
+
+### Tenant Manager
+The `TenantManager` is the central registry for the current tenant state.
+```php
+$tenant = app('tenant')->getTenant();
+$id = app('tenant')->getTenantId();
+```
+
+### Scope Isolation (Shared Database)
+To isolate data within a shared database, use the `BelongsToTenant` trait on your models. This will:
+1.  **Auto-Filter:** Automatically add `WHERE tenant_id = ?` to all queries.
+2.  **Auto-Assign:** Automatically set `tenant_id` when creating new records.
+
+```php
+namespace App\Models;
+use Phantom\Traits\BelongsToTenant;
+
+class Post extends Model {
+    use BelongsToTenant;
+}
+```
+
+### Database Isolation (Separate Databases)
+You can dynamically switch the database connection for a specific tenant:
+```php
+app('tenant')->setTenant($tenantId, [
+    'driver' => 'mysql',
+    'database' => 'tenant_db_1',
+    // ... other config ...
+]);
+```
+
+### Tenant Identification Middleware
+Register the `IdentifyTenant` middleware to automate the process. It supports:
+1.  **Header:** `X-Tenant-ID` header.
+2.  **Subdomain:** Detects `tenant` from `tenant.example.com`.
+
+```php
+// Register in config/app.php or use directly in routes
+$router->group(['middleware' => IdentifyTenant::class], function() {
+    // Protected routes
+});
+```
 
 
 

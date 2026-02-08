@@ -96,6 +96,24 @@ class Request
     }
 
     /**
+     * Get a header from the request.
+     *
+     * @param  string  $key
+     * @param  mixed  $default
+     * @return string|null
+     */
+    public function header($key, $default = null)
+    {
+        $key = strtoupper(str_replace('-', '_', $key));
+
+        if (isset($this->serverParams['HTTP_' . $key])) {
+            return $this->serverParams['HTTP_' . $key];
+        }
+
+        return $this->serverParams[$key] ?? $default;
+    }
+
+    /**
      * Validate the request data.
      *
      * @param array $rules
