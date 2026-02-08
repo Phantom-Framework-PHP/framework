@@ -149,5 +149,15 @@ class Compiler
         }, $this->content);
 
         $this->content = str_replace('@endslot', "<?php \$this->endSection(); ?>", $this->content);
+
+        // @critical
+        $this->content = preg_replace_callback('/@critical\s*\(\'(.+?)\'\)/', function($m) {
+            return "<?php 
+                \$path = base_path('public/assets/' . '{$m[1]}');
+                if(file_exists(\$path)) {
+                    echo '<style>' . file_get_contents(\$path) . '</style>';
+                }
+            ?>";
+        }, $this->content);
     }
 }

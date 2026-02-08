@@ -409,7 +409,9 @@ if (! function_exists('vite')) {
         $manifest = json_decode(file_get_contents($manifestPath), true);
         foreach ($entries as $e) {
             if (isset($manifest[$e])) {
-                $html .= '<script type="module" src="/build/' . $manifest[$e]['file'] . '"></script>';
+                $file = $manifest[$e]['file'];
+                $html .= '<link rel="modulepreload" href="/build/' . $file . '">';
+                $html .= '<script type="module" src="/build/' . $file . '"></script>';
                 if (isset($manifest[$e]['css'])) {
                     foreach ($manifest[$e]['css'] as $css) {
                         $html .= '<link rel="stylesheet" href="/build/' . $css . '">';

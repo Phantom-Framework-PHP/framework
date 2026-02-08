@@ -738,6 +738,16 @@ Phantom integrates with **Vite** for modern asset management. Use the `vite()` h
     <?= vite(['resources/js/app.js', 'resources/css/app.css']) ?>
 </head>
 ```
+In production, `vite()` automatically adds `<link rel="modulepreload">` for better performance.
+
+### Critical CSS (v1.18.8)
+To avoid "Flash of Unstyled Content", you can inline critical CSS directly in the head:
+```html
+<head>
+    @critical('main.css')
+</head>
+```
+The framework will look for the file in `public/assets/`.
 
 ---
 
