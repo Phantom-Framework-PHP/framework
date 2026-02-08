@@ -84,6 +84,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
     *   [Basic Usage](#ai-usage)
     *   [Drivers (Gemini, OpenAI)](#ai-drivers)
 19. [**Observability (Phantom Pulse) (v1.17.1)**](#pulse)
+20. [**Security Shield (IP Reputation) (v1.17.2)**](#shield)
 
 ---
 
@@ -869,5 +870,38 @@ Database::enableQueryLog();
 // Run queries...
 
 $queries = Database::getQueryLog();
+```
+
+<a name="shield"></a>
+## 20. Security Shield (IP Reputation) (v1.17.2)
+
+Phantom Security Shield is an automated defense system that protects your application against common attacks and malicious behaviors.
+
+### How it works
+The Shield assigns "Risk Points" to IP addresses based on their activity:
+- **404 Errors:** +10 points per occurrence.
+- **Threshold:** Once an IP reaches 100 points, it is automatically blocked for 60 minutes.
+- **Decay:** Risk points automatically expire after 60 minutes of inactivity.
+
+### Usage
+The Security Shield is enabled by default as a global middleware. No configuration is required.
+
+### Manual Management
+You can manually interact with the Shield via the `Phantom\Security\Shield` class:
+```php
+use Phantom\Security\Shield;
+
+$shield = new Shield();
+
+// Check if blocked
+if ($shield->isBlocked($ip)) {
+    // ...
+}
+
+// Manually record risk
+$shield->recordRisk($ip, 50);
+
+// Reset an IP
+$shield->resetRisk($ip);
 ```
 

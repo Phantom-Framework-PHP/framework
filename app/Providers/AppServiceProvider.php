@@ -67,7 +67,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Register global middleware
-        $this->app->make('router')->use(\Phantom\Http\Middlewares\PulseMiddleware::class);
+        // Register global middlewares
+        $router = $this->app->make('router');
+        
+        $router->use(\Phantom\Http\Middlewares\ShieldMiddleware::class);
+        $router->use(\Phantom\Http\Middlewares\PulseMiddleware::class);
     }
 }
