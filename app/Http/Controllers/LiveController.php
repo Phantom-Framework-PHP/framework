@@ -43,7 +43,8 @@ class LiveController extends Controller
             return (new Response())->json([
                 'html' => $instance->output(),
                 'state' => base64_encode(json_encode($instance->getState())),
-                'errors' => $instance->getErrors()
+                'errors' => $instance->getErrors(),
+                'events' => $instance->getEmittedEvents()
             ]);
 
         } catch (Throwable $e) {
@@ -52,7 +53,8 @@ class LiveController extends Controller
                 return (new Response())->json([
                     'html' => $instance->output(),
                     'state' => base64_encode(json_encode($instance->getState())),
-                    'errors' => $instance->getErrors()
+                    'errors' => $instance->getErrors(),
+                    'events' => $instance->getEmittedEvents()
                 ]);
             }
 

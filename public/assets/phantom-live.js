@@ -1,28 +1,53 @@
+document.addEventListener('DOMContentLoaded', () => {
+    initializeLiveComponents();
+});
+
 document.addEventListener('click', e => {
     const el = e.target.closest('[ph-click]');
     if (!el) return;
-
     const component = el.closest('[data-live-component]');
     if (!component) return;
-
-    const action = el.getAttribute('ph-click');
-    updateLiveComponent(component, action);
+    updateLiveComponent(component, el.getAttribute('ph-click'));
 });
 
 document.addEventListener('input', e => {
     const el = e.target.closest('[ph-model]');
     if (!el) return;
-
     const component = el.closest('[data-live-component]');
     if (!component) return;
-
     const property = el.getAttribute('ph-model');
     const state = JSON.parse(atob(component.getAttribute('data-live-state')));
     state[property] = el.value;
     component.setAttribute('data-live-state', btoa(JSON.stringify(state)));
 });
 
-async function updateLiveComponent(component, action = null) {
+function initializeLiveComponents() {
+    document.querySelectorAll('[data-live-component]').forEach(component => {
+        // Handle Polling
+        const poll = component.querySelector('[ph-poll]');
+        if (poll && !component.dataset.pollingSet) {
+            const ms = poll.getAttribute('ph-poll') || 5000;
+            setInterval(() => updateLiveComponent(component), ms);
+            component.dataset.pollingSet = true;
+        }
+    });
+}
+
+/**
+ * Global Event Dispatcher for Inter-component communication
+ */
+window.PhantomLive = {
+    emit(event, params = []) {
+        document.querySelectorAll('[data-live-component]').forEach(component => {
+            const listeners = JSON.parse(atob(component.getAttribute('data-live-listeners') || 'e30='));
+            if (listeners[event]) {
+                updateLiveComponent(component, listeners[event], params);
+            }
+        });
+    }
+};
+
+async function updateLiveComponent(component, action = null, params = []) {
     const name = component.getAttribute('data-live-component');
     const id = component.getAttribute('data-live-id');
     const state = component.getAttribute('data-live-state');
@@ -37,25 +62,23 @@ async function updateLiveComponent(component, action = null) {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ component: name, id, state, action })
+            body: JSON.stringify({ component: name, id, state, action, params })
         });
 
         const data = await response.json();
-        
-        if (data.error) {
-            console.error('Phantom Live Error:', data.error);
-            return;
-        }
+        if (data.error) return console.error('Phantom Live Error:', data.error);
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.html, 'text/html');
         const newNode = doc.querySelector('[data-live-component]');
         
-        // Use Morphing instead of replaceWith
         morph(component, newNode);
-        
-        // Update state metadata
         component.setAttribute('data-live-state', data.state);
+        
+        // Trigger emitted events
+        if (data.events) {
+            data.events.forEach(e => window.PhantomLive.emit(e.event, e.params));
+        }
         
     } catch (err) {
         console.error('Phantom Live Fetch Error:', err);
@@ -64,39 +87,25 @@ async function updateLiveComponent(component, action = null) {
     }
 }
 
-/**
- * Lightweight DOM Morphing Algorithm
- */
 function morph(oldNode, newNode) {
-    // 1. If nodes are different types, replace entirely
     if (oldNode.nodeName !== newNode.nodeName) {
         oldNode.replaceWith(newNode.cloneNode(true));
         return;
     }
 
-    // 2. Update Attributes
     const oldAttrs = oldNode.attributes;
     const newAttrs = newNode.attributes;
-
     for (const attr of newAttrs) {
-        if (oldNode.getAttribute(attr.name) !== attr.value) {
-            oldNode.setAttribute(attr.name, attr.value);
-        }
+        if (oldNode.getAttribute(attr.name) !== attr.value) oldNode.setAttribute(attr.name, attr.value);
     }
     for (const attr of oldAttrs) {
-        if (!newNode.hasAttribute(attr.name)) {
-            oldNode.removeAttribute(attr.name);
-        }
+        if (!newNode.hasAttribute(attr.name)) oldNode.removeAttribute(attr.name);
     }
 
-    // 3. Update Content (Text Nodes)
     if (newNode.childNodes.length === 0 || (newNode.childNodes.length === 1 && newNode.childNodes[0].nodeType === Node.TEXT_NODE)) {
         if (oldNode.textContent !== newNode.textContent) {
-            // Preserve focus for inputs
             if (oldNode.nodeName === 'INPUT' || oldNode.nodeName === 'TEXTAREA') {
-                if (document.activeElement !== oldNode) {
-                    oldNode.value = newNode.value;
-                }
+                if (document.activeElement !== oldNode) oldNode.value = newNode.value;
             } else {
                 oldNode.textContent = newNode.textContent;
             }
@@ -104,21 +113,12 @@ function morph(oldNode, newNode) {
         return;
     }
 
-    // 4. Update Children (Recursive)
     const oldChildren = Array.from(oldNode.childNodes);
     const newChildren = Array.from(newNode.childNodes);
-
     newChildren.forEach((newChild, i) => {
         const oldChild = oldChildren[i];
-        if (!oldChild) {
-            oldNode.appendChild(newChild.cloneNode(true));
-        } else {
-            morph(oldChild, newChild);
-        }
+        if (!oldChild) oldNode.appendChild(newChild.cloneNode(true));
+        else morph(oldChild, newChild);
     });
-
-    // Remove extra old children
-    while (oldNode.childNodes.length > newChildren.length) {
-        oldNode.removeChild(oldNode.lastChild);
-    }
+    while (oldNode.childNodes.length > newChildren.length) oldNode.removeChild(oldNode.lastChild);
 }

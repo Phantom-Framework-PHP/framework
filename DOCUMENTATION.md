@@ -993,6 +993,21 @@ Use the `@live` directive in your views:
 - `ph-click="methodName"`: Calls a public method on the component when the element is clicked.
 - `ph-model="propertyName"`: Synchronizes the element's value (input/select) with a public property in the component.
 - `ph-loading`: Elements with this attribute will be shown during AJAX requests and hidden otherwise (useful for spinners).
+- `ph-poll="5000"`: Automatically refreshes the component every X milliseconds.
+
+### Computed Properties (v1.18.4)
+You can define methods that start with `get` and end with `Property` to create virtual properties:
+```php
+public function getFullNameProperty() {
+    return "{$this->first_name} {$this->last_name}";
+}
+// Access in view: {{ $full_name }}
+```
+
+### Event System (v1.18.4)
+Components can communicate using events:
+- **Emitting:** `$this->emit('postAdded', $postId);`
+- **Listening:** Define a `protected $listeners = ['postAdded' => 'refresh'];` property in your component.
 
 ### Installation
 Ensure you include the Phantom Live JavaScript bridge in your master layout:
