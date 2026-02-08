@@ -852,6 +852,7 @@ Phantom Pulse is a lightweight telemetry system designed to monitor the performa
 ### Features
 - **Request Monitoring:** Tracks URL, method, duration, and memory usage.
 - **Database Telemetry:** Logs all SQL queries executed during a request, including their execution time.
+- **Security Monitoring (v1.17.3):** Dedicated tab to monitor IP reputation, blocked addresses, and manage whitelists.
 - **History:** Stores the last 50 requests in a compact JSON format.
 
 ### Usage

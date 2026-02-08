@@ -3,24 +3,31 @@
 namespace Phantom\Http\Controllers;
 
 use Phantom\Http\Response;
+use Phantom\Security\Shield;
 
 class PulseController extends Controller
 {
     public function index()
     {
-        $path = storage_path('framework/pulse.json');
-        $data = [];
-
-        if (file_exists($path)) {
-            $data = json_decode(file_get_contents($path), true) ?: [];
+        // Fetch Request History
+        $pulsePath = storage_path('framework/pulse.json');
+        $history = [];
+        if (file_exists($pulsePath)) {
+            $history = json_decode(file_get_contents($pulsePath), true) ?: [];
         }
 
-        // Si es una petición AJAX (por ejemplo para refrescar la tabla), devolvemos JSON
-        if (request()->header('X-Requested-With') === 'XMLHttpRequest') {
-            return Response::json($data);
+        // Fetch Security Data
+        $shieldPath = storage_path('framework/shield.json');
+        $security = [];
+        if (file_exists($shieldPath)) {
+            $security = json_decode(file_get_contents($shieldPath), true) ?: [];
         }
 
-        return view('phantom.pulse', ['history' => $data]);
+        return view('phantom.pulse', [
+            'history' => $history,
+            'security' => $security,
+            'tab' => request()->input('tab', 'requests')
+        ]);
     }
 
     public function clear()
@@ -31,5 +38,15 @@ class PulseController extends Controller
         }
 
         return redirect('/phantom/pulse');
+    }
+
+    public function resetIp($ip = null)
+    {
+        $ip = request()->input('ip');
+        if ($ip) {
+            (new Shield())->resetRisk($ip);
+        }
+
+        return redirect('/phantom/pulse?tab=security');
     }
 }
