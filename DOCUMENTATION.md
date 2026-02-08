@@ -949,7 +949,7 @@ while ($req = $roadRunner->acceptRequest()) {
 Phantom Live allows you to build dynamic, reactive interfaces using only PHP and Blade-like templates. It handles DOM updates via AJAX, eliminating the need for custom JavaScript for common UI interactions.
 
 ### Creating a Component
-Run `php phantom make:live Counter` (planned command) or manually create a class in `app/Live/Components`:
+Run `php phantom make:live Counter`. This generates a class in `app/Live/Components` and a view in `resources/views/live`.
 
 ```php
 namespace App\Live\Components;
@@ -958,17 +958,21 @@ use Phantom\Live\Component;
 class Counter extends Component {
     public $count = 0;
 
+    /**
+     * Initializer (Lifecycle Hook)
+     */
+    public function mount() {
+        $this->count = 10;
+    }
+
     public function increment() {
+        // Built-in Validation
+        $this->validate(['count' => 'numeric|max:100']);
         $this->count++;
     }
 
     public function render() {
-        return '
-            <div>
-                <span>Count: ' . $this->count . '</span>
-                <button ph-click="increment">+</button>
-            </div>
-        ';
+        return view('live.counter');
     }
 }
 ```
@@ -982,6 +986,7 @@ Use the `@live` directive in your views:
 ### Directives
 - `ph-click="methodName"`: Calls a public method on the component when the element is clicked.
 - `ph-model="propertyName"`: Synchronizes the element's value (input/select) with a public property in the component.
+- `ph-loading`: Elements with this attribute will be shown during AJAX requests and hidden otherwise (useful for spinners).
 
 ### Installation
 Ensure you include the Phantom Live JavaScript bridge in your master layout:

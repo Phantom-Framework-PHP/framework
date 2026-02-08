@@ -205,6 +205,29 @@ if ($command === 'list') {
     file_put_contents($path, $stub);
     echo "Created Command: app/Console/Commands/{$name}.php\n";
 
+} elseif ($command === 'make:live') {
+    $name = $args[1] ?? null;
+    if (!$name) { echo "Error: Component name required.\n"; exit(1); }
+    
+    // Create Class
+    $path = __DIR__ . "/app/Live/Components/{$name}.php";
+    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+    if (file_exists($path)) { echo "Error: Component already exists!\n"; exit(1); }
+    
+    $viewName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+    $stub = "<?php\n\nnamespace Phantom\\Live\\Components;\n\nuse Phantom\\Live\\Component;\n\nclass {$name} extends Component\n{\n    public function mount()\n    {\n        // Initialize data\n    }\n\n    public function render()\n    {\n        return view('live.{$viewName}', ['state' => \$this->getState()]);\n    }\n}\n";
+    file_put_contents($path, $stub);
+    
+    // Create View
+    $viewPath = __DIR__ . "/resources/views/live/{$viewName}.php";
+    if (!file_exists(dirname($viewPath))) mkdir(dirname($viewPath), 0755, true);
+    if (!file_exists($viewPath)) {
+        file_put_contents($viewPath, "<div>\n    <!-- Live Component: {$name} -->\n    <h1>{$name} Component</h1>\n</div>");
+    }
+    
+    echo "Created Live Component: app/Live/Components/{$name}.php\n";
+    echo "Created View: resources/views/live/{$viewName}.php\n";
+
 } elseif ($command === 'migrate') {
     echo "Running migrations...\n";
     $db = $app->make('db');

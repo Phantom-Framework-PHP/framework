@@ -5,6 +5,7 @@ namespace Phantom\Live;
 use Phantom\View\View;
 use ReflectionClass;
 use ReflectionProperty;
+use Phantom\Validation\Validator;
 
 abstract class Component
 {
@@ -14,9 +15,48 @@ abstract class Component
     public $id;
 
     /**
+     * Validation errors for the component.
+     */
+    protected $errors = [];
+
+    /**
+     * Initialize the component.
+     */
+    public function mount()
+    {
+        //
+    }
+
+    /**
      * Render the component view.
      */
     abstract public function render();
+
+    /**
+     * Validate the component data.
+     * 
+     * @param array $rules
+     * @return array
+     */
+    public function validate(array $rules)
+    {
+        $validator = new Validator($this->getState(), $rules);
+
+        if (!$validator->validate()) {
+            $this->errors = $validator->errors();
+            throw new \Exception("Validation failed in Live Component");
+        }
+
+        return array_intersect_key($this->getState(), $rules);
+    }
+
+    /**
+     * Get validation errors.
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
 
     /**
      * Get the public properties of the component for state hydration.
