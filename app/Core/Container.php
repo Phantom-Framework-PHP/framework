@@ -196,4 +196,26 @@ class Container
     {
         return static::$instance = $container;
     }
+
+    /**
+     * Remove a resolved instance from the instance cache.
+     *
+     * @param  string  $abstract
+     * @return void
+     */
+    public function forget($abstract)
+    {
+        unset($this->instances[$abstract]);
+    }
+
+    /**
+     * Flush the container of all bindings and resolved instances.
+     *
+     * @return void
+     */
+    public function flush()
+    {
+        $this->instances = [];
+        $this->bindings = [];
+    }
 }

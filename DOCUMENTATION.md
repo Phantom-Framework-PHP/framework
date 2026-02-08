@@ -85,6 +85,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
     *   [Drivers (Gemini, OpenAI)](#ai-drivers)
 19. [**Observability (Phantom Pulse) (v1.17.1)**](#pulse)
 20. [**Security Shield (IP Reputation) (v1.17.2)**](#shield)
+21. [**Hybrid Engine (RoadRunner/Swoole) (v1.17.4)**](#hybrid)
 
 ---
 
@@ -905,4 +906,34 @@ $shield->recordRisk($ip, 50);
 // Reset an IP
 $shield->resetRisk($ip);
 ```
+
+<a name="hybrid"></a>
+## 21. Hybrid Engine (RoadRunner/Swoole) (v1.17.4)
+
+Phantom Framework is now ready for high-performance, long-running environments. The Hybrid Engine allows the application to boot once and handle thousands of requests without restarting, drastically reducing latency.
+
+### How it works
+In a traditional PHP setup, the application boots and shuts down for every request. With the Hybrid Engine, the application stays in memory.
+
+**Phantom\Runtime\Worker:**
+This class manages the request lifecycle in a loop:
+1. Receives a request object.
+2. Refreshes the application state (clears old request data).
+3. Processes the request and returns a response.
+4. Repeats.
+
+### Example Usage (Pseudo-code for RoadRunner)
+```php
+use Phantom\Core\Application;
+use Phantom\Runtime\Worker;
+
+$app = new Application(__DIR__);
+$worker = new Worker($app);
+
+while ($req = $roadRunner->acceptRequest()) {
+    $response = $worker->handle($req);
+    $roadRunner->respond($response);
+}
+```
+
 

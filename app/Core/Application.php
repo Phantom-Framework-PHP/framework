@@ -14,7 +14,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.17.3';
+    const VERSION = '1.17.4';
 
     /**
      * The base path for the Phantom installation.
@@ -225,5 +225,23 @@ class Application extends Container
     public function basePath()
     {
         return $this->basePath;
+    }
+
+    /**
+     * Refresh the application for a new request.
+     *
+     * @return void
+     */
+    public function refreshRequest()
+    {
+        $this->forget('request');
+        $this->forget(\Phantom\Http\Request::class);
+        
+        // Also forget session and auth if they store request-specific state
+        $this->forget('session');
+        $this->forget('auth');
+        
+        // Clear resolved instances of controllers to ensure fresh injection
+        // This is a simplified approach; in a full implementation we might track resolved services.
     }
 }
