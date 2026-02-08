@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.16.1). This document covers the entire ecosystem, from the core architecture to the latest AI features.
+Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 
@@ -60,6 +60,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.1). This
 12. [**Phantom CLI**](#cli)
     *   [Tinker (REPL)](#tinker)
     *   [Generators](#generators)
+    *   [Phantom AI CLI (v1.16.5)](#ai-cli)
 13. [**File Storage**](#storage)
     *   [Configuration](#storage-config)
     *   [Basic Usage](#storage-usage)
@@ -587,6 +588,16 @@ Interactive shell to test code: `php phantom tinker`.
 - `make:resource`
 - `make:observer`
 - `make:command`
+
+<a name="ai-cli"></a>
+### Phantom AI CLI (v1.16.5)
+The AI CLI allows you to generate framework components using natural language. It uses the default AI driver configured in `config/ai.php`.
+
+**Usage:**
+```bash
+php phantom ai:generate "create a migration for products with name, description and price"
+```
+The AI will interpret your request and automatically create the necessary file with the correct Phantom Framework syntax and PSR-4 namespaces.
 
 ---
 

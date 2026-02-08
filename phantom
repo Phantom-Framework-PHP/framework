@@ -40,7 +40,7 @@ if ($command === 'list') {
         $files = glob($commandsPath . '/*.php');
         foreach ($files as $file) {
             require_once $file;
-            $className = "App\\Console\\Commands\\" . basename($file, '.php');
+            $className = "Phantom\\Console\\Commands\\" . basename($file, '.php');
             if (class_exists($className)) {
                 $instance = new $className();
                 if (property_exists($instance, 'signature')) {
@@ -201,7 +201,7 @@ if ($command === 'list') {
     $path = __DIR__ . "/app/Console/Commands/{$name}.php";
     if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
     if (file_exists($path)) { echo "Error: Command already exists!\n"; exit(1); }
-    $stub = "<?php\n\nnamespace App\Console\Commands;\n\nclass {$name}\n{\n    public \$signature = 'command:name';\n    public \$description = 'Command description';\n\n    public function handle()\n    {\n        echo \"Hello from custom command!\";\n    }\n}\n";
+    $stub = "<?php\n\nnamespace Phantom\\Console\\Commands;\n\nclass {$name}\n{\n    public \$signature = 'command:name';\n    public \$description = 'Command description';\n\n    public function handle()\n    {\n        echo \"Hello from custom command!\";\n    }\n}\n";
     file_put_contents($path, $stub);
     echo "Created Command: app/Console/Commands/{$name}.php\n";
 
@@ -283,5 +283,21 @@ if ($command === 'list') {
     }
 
 } else {
+    // Try to run custom commands
+    $commandsPath = __DIR__ . '/app/Console/Commands';
+    if (file_exists($commandsPath)) {
+        $files = glob($commandsPath . '/*.php');
+        foreach ($files as $file) {
+            require_once $file;
+            $className = "Phantom\\Console\\Commands\\" . basename($file, '.php');
+            if (class_exists($className)) {
+                $instance = new $className();
+                if (property_exists($instance, 'signature') && $instance->signature === $command) {
+                    $instance->handle($args);
+                    exit;
+                }
+            }
+        }
+    }
     echo "Unknown command: {$command}\n";
 }
