@@ -14,7 +14,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.19.0';
+    const VERSION = '1.19.1';
 
     /**
      * The base path for the Phantom installation.
@@ -233,6 +233,9 @@ class Application extends Container
         if (config('app.live_enabled', true)) {
             $router->post('/phantom/live/update', [\Phantom\Http\Controllers\LiveController::class, 'update']);
         }
+
+        // Phantom API Documentation
+        $router->get('/phantom/docs', [\Phantom\Http\Controllers\ApiDocController::class, 'index']);
     }
 
     /**

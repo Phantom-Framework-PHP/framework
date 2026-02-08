@@ -1091,12 +1091,15 @@ The command will:
 2. Analyze the controller methods using your default AI driver.
 3. Generate a `public/swagger.json` file.
 
-### Customization
-The AI analysis automatically picks up:
-- Route parameters.
-- Summaries and descriptions based on logic.
-- Expected responses.
-- Validation rules from `$request->validate()`.
+### Interactive Dashboard (v1.19.1)
+Once the documentation is generated, you can view it interactively at:
+`your-app.test/phantom/docs`
+
+The dashboard uses **Swagger UI** to allow you to:
+- Browse all available endpoints.
+- View request/response models.
+- **Try it out:** Execute real API calls directly from the browser.
+- Automatically handles CSRF via the `X-CSRF-TOKEN` header.
 
 
 
