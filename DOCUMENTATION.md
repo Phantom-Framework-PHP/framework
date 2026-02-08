@@ -83,8 +83,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.16.5). This
     *   [Configuration](#ai-config)
     *   [Basic Usage](#ai-usage)
     *   [Drivers (Gemini, OpenAI)](#ai-drivers)
-    *   [Basic Usage](#async-usage)
-    *   [Suspending and Resuming](#async-suspend)
+19. [**Observability (Phantom Pulse) (v1.17.1)**](#pulse)
 
 ---
 
@@ -843,4 +842,32 @@ $request->validate([
 - **Gemini:** Built-in support for Google's Gemini models via native cURL.
 - **OpenAI:** Support for GPT models.
 - **Ollama / Anthropic:** (Planned).
+
+<a name="pulse"></a>
+## 19. Observability (Phantom Pulse) (v1.17.1)
+
+Phantom Pulse is a lightweight telemetry system designed to monitor the performance of your application in real-time.
+
+### Features
+- **Request Monitoring:** Tracks URL, method, duration, and memory usage.
+- **Database Telemetry:** Logs all SQL queries executed during a request, including their execution time.
+- **History:** Stores the last 50 requests in a compact JSON format.
+
+### Usage
+Phantom Pulse is automatically enabled when `APP_DEBUG=true` is set in your `.env` file.
+
+**Dashboard:**
+Access the performance dashboard at: `your-app.test/phantom/pulse`
+
+### Programmatic Access
+You can interact with the query log manually:
+```php
+use Phantom\Database\Database;
+
+Database::enableQueryLog();
+
+// Run queries...
+
+$queries = Database::getQueryLog();
 ```
+

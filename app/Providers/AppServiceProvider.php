@@ -59,4 +59,15 @@ class AppServiceProvider extends ServiceProvider
             };
         });
     }
+
+    /**
+     * Boot any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        // Register global middleware
+        $this->app->make('router')->use(\Phantom\Http\Middlewares\PulseMiddleware::class);
+    }
 }

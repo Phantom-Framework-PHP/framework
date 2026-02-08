@@ -30,6 +30,20 @@ class Database
     protected $activeConnection;
 
     /**
+     * The recorded queries for telemetry.
+     *
+     * @var array
+     */
+    protected static $queryLog = [];
+
+    /**
+     * Whether query logging is enabled.
+     *
+     * @var bool
+     */
+    protected static $loggingQueries = false;
+
+    /**
      * Create a new Database instance.
      *
      * @param  array  $config
@@ -101,10 +115,16 @@ class Database
     public function query($sql, $params = [])
     {
         $pdo = $this->getPdo();
+        $start = microtime(true);
         
         try {
             $statement = $pdo->prepare($sql);
             $statement->execute($params);
+            
+            if (static::$loggingQueries) {
+                $this->logQuery($sql, $params, $start);
+            }
+            
             return $statement;
         } finally {
             if ($this->pool && !$this->activeConnection) {
@@ -123,16 +143,79 @@ class Database
     public function select($sql, $params = [])
     {
         $pdo = $this->getPdo();
+        $start = microtime(true);
 
         try {
             $statement = $pdo->prepare($sql);
             $statement->execute($params);
+            
+            if (static::$loggingQueries) {
+                $this->logQuery($sql, $params, $start);
+            }
+            
             return $statement->fetchAll();
         } finally {
             if ($this->pool && !$this->activeConnection) {
                 $this->pool->releaseConnection($pdo);
             }
         }
+    }
+
+    /**
+     * Log a query in the query log.
+     *
+     * @param  string  $sql
+     * @param  array   $params
+     * @param  float   $start
+     * @return void
+     */
+    protected function logQuery($sql, $params, $start)
+    {
+        static::$queryLog[] = [
+            'sql' => $sql,
+            'params' => $params,
+            'time' => round((microtime(true) - $start) * 1000, 2), // ms
+        ];
+    }
+
+    /**
+     * Enable the query log.
+     *
+     * @return void
+     */
+    public static function enableQueryLog()
+    {
+        static::$loggingQueries = true;
+    }
+
+    /**
+     * Disable the query log.
+     *
+     * @return void
+     */
+    public static function disableQueryLog()
+    {
+        static::$loggingQueries = false;
+    }
+
+    /**
+     * Get the query log.
+     *
+     * @return array
+     */
+    public static function getQueryLog()
+    {
+        return static::$queryLog;
+    }
+
+    /**
+     * Flush the query log.
+     *
+     * @return void
+     */
+    public static function flushQueryLog()
+    {
+        static::$queryLog = [];
     }
     
     /**

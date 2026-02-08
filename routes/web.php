@@ -27,3 +27,9 @@ $router->get('/db-test', function () {
         return "Database error: " . $e->getMessage();
     }
 });
+
+// Phantom Pulse Routes
+$router->group(['prefix' => 'phantom/pulse'], function($router) {
+    $router->get('/', [\Phantom\Http\Controllers\PulseController::class, 'index']);
+    $router->post('/clear', [\Phantom\Http\Controllers\PulseController::class, 'clear']);
+});

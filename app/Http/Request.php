@@ -59,14 +59,24 @@ class Request
         return strtok($uri, '?');
     }
 
+    public function method()
+    {
+        return $this->method;
+    }
+
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
     public function uri()
     {
         return $this->uri;
     }
 
-    public function method()
+    public function getPath()
     {
-        return $this->method;
+        return $this->uri;
     }
 
     public function input($key, $default = null)
