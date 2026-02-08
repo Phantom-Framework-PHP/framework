@@ -710,6 +710,12 @@ Configure your queue connections in `config/queue.php`.
         'driver' => 'redis',
         'host' => '127.0.0.1',
     ],
+    // Redis Cluster (v1.19.2)
+    'redis_cluster' => [
+        'driver' => 'redis',
+        'clusters' => ['127.0.0.1:7000', '127.0.0.1:7001'],
+        'timeout' => 5.0,
+    ],
 ],
 ```
 

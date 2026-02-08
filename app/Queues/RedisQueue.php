@@ -2,8 +2,7 @@
 
 namespace Phantom\Queues;
 
-use Exception;
-use Redis;
+use Phantom\Redis\RedisFactory;
 
 class RedisQueue
 {
@@ -16,24 +15,7 @@ class RedisQueue
         $this->queue = $config['queue'] ?? 'default';
         $this->connection = $config['connection'] ?? 'default';
         
-        if (!class_exists('Redis')) {
-            throw new Exception("Redis extension not found. Please install phpredis.");
-        }
-
-        $this->redis = new Redis();
-        $this->redis->connect(
-            $config['host'] ?? '127.0.0.1', 
-            $config['port'] ?? 6379, 
-            $config['timeout'] ?? 0.0
-        );
-
-        if (isset($config['password']) && $config['password']) {
-            $this->redis->auth($config['password']);
-        }
-
-        if (isset($config['database'])) {
-            $this->redis->select($config['database']);
-        }
+        $this->redis = RedisFactory::make($config);
     }
 
     /**
