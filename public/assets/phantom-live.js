@@ -2,12 +2,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeLiveComponents();
 });
 
+let debounceTimers = {};
+
 document.addEventListener('click', e => {
     const el = e.target.closest('[ph-click]');
     if (!el) return;
     const component = el.closest('[data-live-component]');
     if (!component) return;
-    updateLiveComponent(component, el.getAttribute('ph-click'));
+
+    const rawAction = el.getAttribute('ph-click');
+    const { action, params } = parseAction(rawAction);
+    
+    updateLiveComponent(component, action, params);
 });
 
 document.addEventListener('input', e => {
@@ -15,15 +21,56 @@ document.addEventListener('input', e => {
     if (!el) return;
     const component = el.closest('[data-live-component]');
     if (!component) return;
+
     const property = el.getAttribute('ph-model');
-    
-    // For normal inputs, update state immediately
+    const isDebounced = el.hasAttribute('ph-debounce');
+    const delay = el.getAttribute('ph-debounce') || 300;
+
     if (el.type !== 'file') {
-        const state = JSON.parse(atob(component.getAttribute('data-live-state')));
-        state[property] = el.value;
-        component.setAttribute('data-live-state', btoa(JSON.stringify(state)));
+        const update = () => {
+            const state = JSON.parse(atob(component.getAttribute('data-live-state')));
+            state[property] = el.value;
+            component.setAttribute('data-live-state', btoa(JSON.stringify(state)));
+            
+            // If it has URL sync, update the URL
+            syncUrl(component, property, el.value);
+            
+            // Only trigger server update if it's not just a state change, 
+            // but for simplicity in Phantom, we update on every model change.
+            updateLiveComponent(component);
+        };
+
+        if (isDebounced) {
+            clearTimeout(debounceTimers[property]);
+            debounceTimers[property] = setTimeout(update, delay);
+        } else {
+            update();
+        }
     }
 });
+
+function parseAction(raw) {
+    const match = raw.match(/([^(]+)(?:\((.*)\))?/);
+    if (!match) return { action: raw, params: [] };
+    
+    const action = match[1];
+    const paramsRaw = match[2] ? match[2].split(',').map(p => p.trim().replace(/['"]/g, '')) : [];
+    
+    // Simple type conversion
+    const params = paramsRaw.map(p => isNaN(p) ? p : (p.includes('.') ? parseFloat(p) : parseInt(p)));
+    
+    return { action, params };
+}
+
+function syncUrl(component, property, value) {
+    const urlSync = JSON.parse(atob(component.getAttribute('data-live-url-sync') || 'W10='));
+    if (urlSync.includes(property)) {
+        const url = new URL(window.location);
+        if (value) url.searchParams.set(property, value);
+        else url.searchParams.delete(property);
+        window.history.replaceState({}, '', url);
+    }
+}
 
 function initializeLiveComponents() {
     document.querySelectorAll('[data-live-component]').forEach(component => {
@@ -56,7 +103,6 @@ async function updateLiveComponent(component, action = null, params = []) {
     loaders.forEach(l => l.style.display = 'block');
 
     try {
-        // Build request body (FormData to support files)
         const formData = new FormData();
         formData.append('component', name);
         formData.append('id', id);
@@ -64,7 +110,6 @@ async function updateLiveComponent(component, action = null, params = []) {
         if (action) formData.append('action', action);
         if (params.length) formData.append('params', JSON.stringify(params));
 
-        // Attach files if any
         component.querySelectorAll('input[type="file"][ph-model]').forEach(fileInput => {
             if (fileInput.files.length > 0) {
                 formData.append(fileInput.getAttribute('ph-model'), fileInput.files[0]);
@@ -73,20 +118,13 @@ async function updateLiveComponent(component, action = null, params = []) {
 
         const response = await fetch('/phantom/live/update', {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: formData
         });
 
         const data = await response.json();
         if (data.error) return console.error('Phantom Live Error:', data.error);
-
-        // Handle Redirect
-        if (data.redirect) {
-            window.location.href = data.redirect;
-            return;
-        }
+        if (data.redirect) return window.location.href = data.redirect;
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.html, 'text/html');

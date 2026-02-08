@@ -13,44 +13,26 @@ abstract class Component
     protected $emittedEvents = [];
     protected $listeners = []; // ['eventName' => 'methodName']
     protected $redirectTo;
+    protected $queryString = []; // Properties to sync with URL
 
     public function mount() {}
 
     abstract public function render();
 
-    /**
-     * Redirect the user to a different URL.
-     */
     public function redirect($url)
     {
         $this->redirectTo = $url;
     }
 
-    public function getRedirect()
-    {
-        return $this->redirectTo;
-    }
+    public function getRedirect() { return $this->redirectTo; }
 
-    /**
-     * Emit an event to be handled by other components or JS.
-     */
     public function emit($event, ...$params)
     {
-        $this->emittedEvents[] = [
-            'event' => $event,
-            'params' => $params
-        ];
+        $this->emittedEvents[] = ['event' => $event, 'params' => $params];
     }
 
-    public function getEmittedEvents()
-    {
-        return $this->emittedEvents;
-    }
-
-    public function getListeners()
-    {
-        return $this->listeners;
-    }
+    public function getEmittedEvents() { return $this->emittedEvents; }
+    public function getListeners() { return $this->listeners; }
 
     public function validate(array $rules)
     {
@@ -85,30 +67,36 @@ abstract class Component
         }
     }
 
-    /**
-     * Magic getter for Computed Properties (getFooProperty).
-     */
     public function __get($key)
     {
         $method = 'get' . str_replace('_', '', ucwords($key, '_')) . 'Property';
-        if (method_exists($this, $method)) {
-            return $this->$method();
-        }
+        if (method_exists($this, $method)) return $this->$method();
         return null;
     }
 
     public function output()
     {
+        // On initial render, sync from URL if properties defined in queryString
+        if (empty($this->id)) {
+            foreach ($this->queryString as $property) {
+                if (isset($_GET[$property])) {
+                    $this->$property = $_GET[$property];
+                }
+            }
+        }
+
         $html = $this->render();
         $state = base64_encode(json_encode($this->getState()));
         $listeners = base64_encode(json_encode($this->getListeners()));
+        $urlSync = base64_encode(json_encode($this->queryString));
         $name = get_class($this);
 
         return '
         <div data-live-component="' . $name . '" 
              data-live-id="' . $this->id . '" 
              data-live-state="' . $state . '"
-             data-live-listeners="' . $listeners . '">
+             data-live-listeners="' . $listeners . '"
+             data-live-url-sync="' . $urlSync . '">
             ' . $html . '
         </div>
         ';

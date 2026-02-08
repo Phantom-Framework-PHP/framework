@@ -990,10 +990,18 @@ Use the `@live` directive in your views:
 ```
 
 ### Directives
-- `ph-click="methodName"`: Calls a public method on the component when the element is clicked.
-- `ph-model="propertyName"`: Synchronizes the element's value (input/select) with a public property in the component.
-- `ph-loading`: Elements with this attribute will be shown during AJAX requests and hidden otherwise (useful for spinners).
-- `ph-poll="5000"`: Automatically refreshes the component every X milliseconds.
+- `ph-click="methodName(1, 'foo')"`: Calls a public method with parameters.
+- `ph-model="propertyName"`: Synchronizes the element's value with a public property.
+- `ph-debounce="500"`: Throttles input updates (works with `ph-model`).
+- `ph-loading`: Shows element during AJAX requests.
+- `ph-poll="5000"`: Automatically refreshes the component.
+
+### URL Query String Sync (v1.18.6)
+Synchronize component properties with the browser URL:
+```php
+protected $queryString = ['search', 'page'];
+```
+These properties will be automatically updated in the URL when they change, and initialized from the URL on page load.
 
 ### Computed Properties (v1.18.4)
 You can define methods that start with `get` and end with `Property` to create virtual properties:

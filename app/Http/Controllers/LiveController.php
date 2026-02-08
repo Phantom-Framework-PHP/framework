@@ -20,6 +20,10 @@ class LiveController extends Controller
             $action = $payload['action'] ?? $request->input('action');
             $params = $payload['params'] ?? $request->input('params', []);
 
+            if (is_string($params)) {
+                $params = json_decode($params, true) ?: [];
+            }
+
             if (!$name) {
                 throw new Exception("Component name is required.");
             }
