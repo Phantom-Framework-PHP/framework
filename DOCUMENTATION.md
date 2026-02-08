@@ -314,8 +314,34 @@ Push content to specific stacks in the layout, useful for JS/CSS.
   ```
 
 <a name="view-components"></a>
-### Components & Includes
+### Components & Includes (v1.10)
 Reuse views with `@include('partials.header', ['active' => 'home'])`.
+
+### Advanced Components (v1.18.7)
+Phantom supports modern tag-based components. Components should be stored in `resources/views/components`.
+
+**Usage:**
+```html
+<x-alert type="danger">
+    Something went wrong!
+</x-alert>
+```
+
+**Implementation (`components/alert.php`):**
+```html
+<div class="alert alert-{{ $type }}">
+    {{ $slot }}
+</div>
+```
+
+**Slots:**
+You can pass named slots using the `@slot` directive:
+```html
+<x-card>
+    @slot('title') My Card @endslot
+    Main content here.
+</x-card>
+```
 
 ---
 

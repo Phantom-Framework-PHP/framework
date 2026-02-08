@@ -19,8 +19,39 @@ class Compiler
         $this->compileEchoes();
         $this->compileStatements();
         $this->compileInheritance();
+        $this->compileComponents();
 
         return $this->content;
+    }
+
+    protected function compileComponents()
+    {
+        // Matches <x-name attr="val" /> or <x-name>content</x-name>
+        $pattern = '/<x-([a-z0-9\-\.]+)((?:\s+[a-z0-9\-\.]+(?:="[^"]*")?)*)\s*(?:\/>|>([\s\S]*?)<\/x-\1>)/i';
+
+        $this->content = preg_replace_callback($pattern, function($m) {
+            $name = $m[1];
+            $attributesRaw = $m[2];
+            $content = $m[3] ?? null;
+
+            // Parse attributes
+            $attrs = [];
+            if (preg_match_all('/\s+([a-z0-9\-]+)(?:="([^"]*)")?/i', $attributesRaw, $attrMatches, PREG_SET_ORDER)) {
+                foreach ($attrMatches as $am) {
+                    $attrs[$am[1]] = $am[2] ?? true;
+                }
+            }
+
+            $attrsExport = var_export($attrs, true);
+            $viewName = "components." . str_replace('-', '.', $name);
+
+            // If it has content, it's a slot
+            if ($content !== null) {
+                return "<?php ob_start(); ?>{$content}<?php \$slot = ob_get_clean(); echo \Phantom\View\View::make('{$viewName}', array_merge({$attrsExport}, ['slot' => \$slot]))->render(); ?>";
+            }
+
+            return "<?php echo \Phantom\View\View::make('{$viewName}', {$attrsExport})->render(); ?>";
+        }, $this->content);
     }
 
     protected function compileEchoes()
@@ -111,5 +142,12 @@ class Compiler
         $this->content = preg_replace_callback('/@yield\s*\(\'(.+?)\'\)/', function($m) {
             return "<?php echo \$this->yield('" . $m[1] . "'); ?>";
         }, $this->content);
+
+        // @slot / @endslot
+        $this->content = preg_replace_callback('/@slot\s*\(\'(.+?)\'\)/', function($m) {
+            return "<?php \$this->startSection('" . $m[1] . "'); ?>";
+        }, $this->content);
+
+        $this->content = str_replace('@endslot', "<?php \$this->endSection(); ?>", $this->content);
     }
 }
