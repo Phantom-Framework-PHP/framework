@@ -90,6 +90,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.19.5). This
 23. [**API Auto-Documentation (AI) (v1.19.0)**](#api-doc)
 24. [**Multi-Tenancy Core (v1.19.3)**](#multi-tenancy)
 25. [**Rate Limiting Pro (v1.19.4)**](#rate-limiting)
+26. [**Distributed Cache Pro (v1.19.5)**](#distributed-cache)
 
 ---
 
@@ -400,12 +401,6 @@ For maximum performance in read-only operations, use `toPlainArray()`. This avoi
 $rawUsers = User::where('active', 1)->toPlainArray(); // Collection of stdClass
 $arrayUsers = User::all()->toPlainArray(true); // Collection of associative arrays
 ```
-
-### Redis Cache Cluster (v1.19.5)
-The cache system now supports Redis Clusters via the `RedisFactory`. Configure your clusters in `config/cache.php`.
-
-### Multi-Tenant Isolation (v1.19.5)
-When a tenant is active, all cache keys are automatically prefixed with `tenant:{id}:` to prevent data leakage between customers. This works across all drivers (File, Redis).
 
 <a name="models"></a>
 ### Active Record Models
@@ -1161,6 +1156,7 @@ Register the `IdentifyTenant` middleware to automate the process. It supports:
 $router->group(['middleware' => IdentifyTenant::class], function() {
     // Protected routes
 });
+```
 
 <a name="rate-limiting"></a>
 ## 25. Rate Limiting Pro (v1.19.4)
@@ -1187,11 +1183,34 @@ You can interact with the `RateLimiter` engine manually:
 ```php
 $limiter = app('ratelimiter');
 
-if ($limiter->attempt($key, $max, \$decay)) {
+if ($limiter->attempt($key, $max, $decay)) {
     // Allowed
 }
 ```
+
+<a name="distributed-cache"></a>
+## 26. Distributed Cache Pro (v1.19.5)
+
+Phantom Framework provides a high-performance distributed caching system with native support for Redis Clusters and automatic multi-tenant isolation.
+
+### Redis Cache Cluster
+The cache system leverages the `RedisFactory` to support complex Redis topologies.
+Configure your clusters in `config/cache.php`:
+```php
+'stores' => [
+    'redis' => [
+        'driver' => 'redis',
+        'clusters' => ['127.0.0.1:7000', '127.0.0.1:7001'],
+    ],
+],
 ```
+
+### Multi-Tenant Isolation
+When a tenant is active, the `CacheManager` automatically prefixes all cache keys to prevent data leakage between tenants. 
+- **Pattern:** `{base_prefix}tenant:{tenant_id}:{key}`
+- **Supported Drivers:** Redis, File.
+
+This feature requires no extra configuration; it activates automatically when `IdentifyTenant` middleware is used.
 
 
 
