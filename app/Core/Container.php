@@ -218,4 +218,15 @@ class Container
         $this->instances = [];
         $this->bindings = [];
     }
+
+    /**
+     * Determine if the given abstract type has been bound.
+     *
+     * @param  string  $abstract
+     * @return bool
+     */
+    public function has($abstract)
+    {
+        return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]);
+    }
 }

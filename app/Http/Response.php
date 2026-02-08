@@ -60,6 +60,16 @@ class Response
     }
 
     /**
+     * Get the headers of the response.
+     *
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
      * Set the headers for the response.
      *
      * @param array $headers
@@ -68,6 +78,19 @@ class Response
     public function setHeaders(array $headers)
     {
         $this->headers = array_merge($this->headers, $headers);
+        return $this;
+    }
+
+    /**
+     * Set a single header for the response.
+     *
+     * @param  string  $key
+     * @param  string  $value
+     * @return $this
+     */
+    public function header($key, $value)
+    {
+        $this->headers[$key] = $value;
         return $this;
     }
 

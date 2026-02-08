@@ -62,13 +62,18 @@ class Pipeline
                 if (is_callable($pipe)) {
                     // If pipe is a Closure
                     return $pipe($passable, $stack);
-                } elseif (is_string($pipe) && class_exists($pipe)) {
-                    // If pipe is a Class Name
-                    $instance = new $pipe; // Usually resolved via Container in full framework
-                    return $instance->handle($passable, $stack);
-                } else {
-                    throw new \Exception("Invalid middleware type.");
+                } elseif (is_string($pipe)) {
+                    $parts = explode(':', $pipe, 2);
+                    $name = $parts[0];
+                    $parameters = isset($parts[1]) ? explode(',', $parts[1]) : [];
+
+                    if (class_exists($name)) {
+                        $instance = Container::getInstance()->make($name);
+                        return $instance->handle($passable, $stack, ...$parameters);
+                    }
                 }
+                
+                throw new \Exception("Invalid middleware: " . (is_string($pipe) ? $pipe : gettype($pipe)));
             };
         };
     }

@@ -14,7 +14,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '1.19.3';
+    const VERSION = '1.19.4';
 
     /**
      * The base path for the Phantom installation.
@@ -99,6 +99,10 @@ class Application extends Container
 
         $this->singleton('tenant', function() {
             return new \Phantom\Core\TenantManager();
+        });
+
+        $this->singleton('ratelimiter', function() {
+            return new \Phantom\Security\RateLimiter();
         });
     }
 

@@ -13,6 +13,10 @@ class Router
     protected $groupStack = [];
     protected $lastRoute;
     protected $globalMiddleware = [];
+    protected $middlewareAliases = [
+        'throttle' => \Phantom\Http\Middlewares\ThrottleRequests::class,
+        'tenant' => \Phantom\Http\Middlewares\IdentifyTenant::class,
+    ];
 
     /**
      * Register a global middleware.
@@ -225,6 +229,18 @@ class Router
                     $request->setRouteParams($params);
 
                     $middleware = array_merge($this->globalMiddleware, $route['middleware']);
+
+                    // Resolve aliases
+                    $middleware = array_map(function($m) {
+                        $parts = explode(':', $m, 2);
+                        $name = $parts[0];
+                        $params = isset($parts[1]) ? ':' . $parts[1] : '';
+                        
+                        if (isset($this->middlewareAliases[$name])) {
+                            return $this->middlewareAliases[$name] . $params;
+                        }
+                        return $m;
+                    }, $middleware);
 
                     return (new Pipeline())
                         ->send($request)

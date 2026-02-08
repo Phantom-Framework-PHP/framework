@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.19.3). This document covers the entire ecosystem, from the core architecture to the latest AI features.
+Welcome to the definitive technical manual for Phantom Framework (v1.19.4). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 
@@ -89,6 +89,7 @@ Welcome to the definitive technical manual for Phantom Framework (v1.19.3). This
 22. [**Phantom Live (Reactive Components) (v1.18.0)**](#live)
 23. [**API Auto-Documentation (AI) (v1.19.0)**](#api-doc)
 24. [**Multi-Tenancy Core (v1.19.3)**](#multi-tenancy)
+25. [**Rate Limiting Pro (v1.19.4)**](#rate-limiting)
 
 ---
 
@@ -1154,6 +1155,36 @@ Register the `IdentifyTenant` middleware to automate the process. It supports:
 $router->group(['middleware' => IdentifyTenant::class], function() {
     // Protected routes
 });
+
+<a name="rate-limiting"></a>
+## 25. Rate Limiting Pro (v1.19.4)
+
+Phantom includes a professional rate limiting system based on the **Sliding Window** algorithm, ensuring precise control over request frequency.
+
+### Usage
+Apply rate limits to your routes using the `throttle` middleware alias.
+
+```php
+// Limit to 60 requests per minute
+$router->get('/api/data', [DataController::class, 'index'])
+       ->middleware('throttle:60,60');
+```
+
+### Features
+- **Distributed by Default:** Uses Redis to sync limits across multiple server nodes.
+- **Smart Fallback:** Automatically switches to in-memory tracking if Redis is unavailable.
+- **Transparent Headers:** Automatically adds `X-RateLimit-Limit` and `X-RateLimit-Remaining` to responses.
+- **Dynamic Identification:** Identifies clients by IP address or User ID (if authenticated).
+
+### Manual Control
+You can interact with the `RateLimiter` engine manually:
+```php
+$limiter = app('ratelimiter');
+
+if ($limiter->attempt($key, $max, \$decay)) {
+    // Allowed
+}
+```
 ```
 
 

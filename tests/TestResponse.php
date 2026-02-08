@@ -76,4 +76,26 @@ class TestResponse
     {
         return $this->response->getContent();
     }
+
+    /**
+     * Get the headers of the response.
+     *
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->response->getHeaders();
+    }
+
+    /**
+     * Dynamically access response properties.
+     */
+    public function __get($key)
+    {
+        if ($key === 'headers') {
+            return $this->getHeaders();
+        }
+
+        return $this->response->$key;
+    }
 }
