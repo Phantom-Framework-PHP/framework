@@ -224,7 +224,7 @@ class Router
                 $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $routeUri);
                 $pattern = "#^" . $pattern . "$#";
 
-                if (preg_match($pattern, $uri, $matches)) {
+                if (preg_match($pattern . 'u', $uri, $matches)) {
                     $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                     $request->setRouteParams($params);
 
@@ -311,7 +311,14 @@ class Router
                 }
             } else {
                 // For basic parameters, we try to get from request input by name
-                $dependencies[] = $request->input($parameter->getName());
+                $name = $parameter->getName();
+                $value = $request->input($name);
+
+                if ($value === null && $parameter->isDefaultValueAvailable()) {
+                    $dependencies[] = $parameter->getDefaultValue();
+                } else {
+                    $dependencies[] = $value;
+                }
             }
         }
 

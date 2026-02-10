@@ -23,6 +23,7 @@ if ($command === 'list') {
     echo "  migrate             Run database migrations\n";
     echo "  migrate:rollback    Rollback the last database migration\n";
     echo "  db:seed             Seed the database with records\n";
+    echo "  cache:clear         Flush the application cache\n";
     echo "  queue:work          Start processing jobs on the queue\n";
     echo "  make:model          Create a new model class\n";
     echo "  make:controller     Create a new controller class\n";
@@ -267,18 +268,49 @@ if ($command === 'list') {
     echo "Rollback of batch {$lastBatch} completed.\n";
 
 } elseif ($command === 'db:seed') {
+    $class = $args[1] ?? null;
     echo "Seeding database...\n";
-    $files = glob(__DIR__ . '/database/seeders/*.php');
-    foreach ($files as $file) {
+    
+    $runSeeder = function($file) {
         require_once $file;
-        $className = "Database\\Seeders\\" . basename($file, '.php');
-        if (class_exists($className)) {
-            $seeder = new $className();
-            $seeder->run();
-            echo "Seeded: " . $className . "\n";
+        $baseName = basename($file, '.php');
+        $namespaces = ["Database\\Seeders\\", "Phantom\\Database\\Seeders\\", ""];
+        
+        foreach ($namespaces as $ns) {
+            $className = $ns . $baseName;
+            if (class_exists($className)) {
+                $seeder = new $className();
+                if (method_exists($seeder, 'run')) {
+                    $seeder->run();
+                    echo "Seeded: " . $className . "\n";
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    if ($class) {
+        $file = __DIR__ . "/database/seeders/{$class}.php";
+        if (file_exists($file)) {
+            if (!$runSeeder($file)) {
+                echo "Error: Could not find class for seeder {$class}\n";
+            }
+        } else {
+            echo "Error: Seeder file not found: {$file}\n";
+        }
+    } else {
+        $files = glob(__DIR__ . '/database/seeders/*.php');
+        foreach ($files as $file) {
+            $runSeeder($file);
         }
     }
     echo "Database seeding completed.\n";
+
+} elseif ($command === 'cache:clear') {
+    echo "Clearing cache...\n";
+    $app->make('cache')->flush();
+    echo "Cache cleared successfully.\n";
 
 } elseif ($command === 'queue:work') {
     $connection = $args[1] ?? null;

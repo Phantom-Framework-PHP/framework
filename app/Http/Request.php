@@ -84,6 +84,38 @@ class Request
         return $this->postParams[$key] ?? $this->queryParams[$key] ?? $this->routeParams[$key] ?? $default;
     }
 
+    /**
+     * Alias for input().
+     */
+    public function get($key, $default = null)
+    {
+        return $this->input($key, $default);
+    }
+
+    /**
+     * Get a subset of the items from the input data.
+     */
+    public function only(array $keys)
+    {
+        $results = [];
+        $input = $this->all();
+
+        foreach ($keys as $key) {
+            $results[$key] = $input[$key] ?? null;
+        }
+
+        return $results;
+    }
+
+    /**
+     * Determine if the request contains a given input.
+     */
+    public function has($key)
+    {
+        $input = $this->all();
+        return isset($input[$key]);
+    }
+
     public function setRouteParams(array $params)
     {
         $this->routeParams = $params;

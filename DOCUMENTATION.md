@@ -1,6 +1,6 @@
 # Phantom Framework - Comprehensive Documentation
 
-Welcome to the definitive technical manual for Phantom Framework (v1.19.5). This document covers the entire ecosystem, from the core architecture to the latest AI features.
+Welcome to the definitive technical manual for Phantom Framework (v1.19.6). This document covers the entire ecosystem, from the core architecture to the latest AI features.
 
 ---
 

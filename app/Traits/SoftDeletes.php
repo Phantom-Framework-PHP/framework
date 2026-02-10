@@ -9,7 +9,7 @@ trait SoftDeletes
      *
      * @return void
      */
-    public function bootSoftDeletes()
+    public static function bootSoftDeletes()
     {
         // This could be used for global scopes if we had them
     }

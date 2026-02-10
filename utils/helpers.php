@@ -98,6 +98,21 @@ if (! function_exists('storage_path')) {
     }
 }
 
+if (! function_exists('response')) {
+    /**
+     * Create a new response instance.
+     *
+     * @param  string  $content
+     * @param  int  $status
+     * @param  array  $headers
+     * @return \Phantom\Http\Response
+     */
+    function response($content = '', $status = 200, array $headers = [])
+    {
+        return new \Phantom\Http\Response($content, $status, $headers);
+    }
+}
+
 if (! function_exists('view')) {
     /**
      * Render a view.

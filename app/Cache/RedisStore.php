@@ -45,6 +45,17 @@ class RedisStore
     }
 
     /**
+     * Determine if an item exists in the cache.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function has($key)
+    {
+        return !is_null($this->get($key));
+    }
+
+    /**
      * Retrieve an item from the cache by key.
      *
      * @param  string  $key

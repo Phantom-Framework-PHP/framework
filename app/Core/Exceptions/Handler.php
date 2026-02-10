@@ -8,17 +8,26 @@ use Phantom\Http\Response;
 class Handler
 {
     /**
-     * Render an exception into an HTTP response.
+     * Render an exception into an HTTP response or CLI output.
      *
      * @param  Throwable  $e
-     * @return Response
+     * @return Response|void
      */
     public function render(Throwable $e)
     {
         $this->logError($e);
 
+        $isTesting = defined('PHPUNIT_COMPOSER_INSTALL') || defined('__PHPUNIT_PHAR__');
+
+        if (PHP_SAPI === 'cli' && !$isTesting) {
+            $this->renderCli($e);
+            return;
+        }
+
         $debug = config('app.debug', false);
-        $statusCode = method_exists($e, 'getCode') && $e->getCode() >= 400 ? $e->getCode() : 500;
+        
+        $code = $e->getCode();
+        $statusCode = (is_int($code) && $code >= 400 && $code <= 599) ? $code : 500;
         
         // Always show the nice 404 page for Not Found errors
         if ($statusCode === 404) {
@@ -32,6 +41,29 @@ class Handler
         }
 
         return new Response($content, $statusCode);
+    }
+
+    /**
+     * Render the exception for the CLI.
+     *
+     * @param Throwable $e
+     * @return void
+     */
+    protected function renderCli(Throwable $e)
+    {
+        $debug = config('app.debug', false);
+        
+        echo "\n\033[41;37m ERROR \033[0m {$e->getMessage()}\n";
+        echo "in \033[33m{$e->getFile()}\033[0m on line \033[33m{$e->getLine()}\033[0m\n\n";
+
+        if ($debug) {
+            echo "\033[1;31mStack Trace:\033[0m\n";
+            echo $e->getTraceAsString() . "\n";
+        }
+        
+        if (config('app.env') !== 'testing') {
+            exit(1);
+        }
     }
 
     protected function renderDebug(Throwable $e)

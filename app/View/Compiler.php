@@ -83,6 +83,9 @@ class Compiler
         }, $this->content);
 
         $this->content = str_replace('@endforeach', "<?php endforeach; ?>", $this->content);
+
+        // @csrf
+        $this->content = str_replace('@csrf', "<?php echo csrf_field(); ?>", $this->content);
         
         // @can / @elsecan / @endcan
         $this->content = preg_replace_callback('/@can\s*\((.+?)\)/', function($m) {

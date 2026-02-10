@@ -17,7 +17,7 @@ class Schema
 
     public static function dropIfExists($table)
     {
-        $sql = "DROP TABLE IF EXISTS {$table}";
+        $sql = "DROP TABLE IF EXISTS `{$table}`";
         return Container::getInstance()->make('db')->query($sql);
     }
 }

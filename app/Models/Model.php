@@ -534,11 +534,13 @@ abstract class Model implements JsonSerializable
             $type = strtolower($this->casts[$key]);
             if (($type === 'array' || $type === 'json') && !is_string($value)) {
                 $this->attributes[$key] = json_encode($value);
+                unset($this->processedAttributes[$key]);
                 return;
             }
         }
 
         $this->attributes[$key] = $value;
+        unset($this->processedAttributes[$key]);
     }
 
     public function hasMany($related, $foreignKey = null, $localKey = null)

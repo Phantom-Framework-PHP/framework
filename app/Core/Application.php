@@ -9,12 +9,7 @@ class Application extends Container
      *
      * @var string
      */
-    /**
-     * The Phantom framework version.
-     *
-     * @var string
-     */
-    const VERSION = '1.19.5';
+    const VERSION = '1.19.6';
 
     /**
      * The base path for the Phantom installation.
@@ -42,11 +37,36 @@ class Application extends Container
             $this->setBasePath($basePath);
         }
 
+        $this->ensureStorageDirectoriesExist();
         $this->registerBaseBindings();
         $this->registerErrorHandlers();
         $this->loadEnvironment();
         $this->loadConfiguration();
         $this->registerConfiguredProviders();
+    }
+
+    /**
+     * Ensure the essential storage directories exist.
+     *
+     * @return void
+     */
+    protected function ensureStorageDirectoriesExist()
+    {
+        $directories = [
+            'storage/logs',
+            'storage/framework',
+            'storage/framework/views',
+            'storage/cache',
+            'storage/sessions',
+            'storage/app'
+        ];
+
+        foreach ($directories as $dir) {
+            $path = $this->basePath . DIRECTORY_SEPARATOR . $dir;
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
+        }
     }
 
     /**
@@ -58,7 +78,9 @@ class Application extends Container
     {
         set_exception_handler(function ($e) {
             $response = (new \Phantom\Core\Exceptions\Handler())->render($e);
-            $response->send();
+            if ($response instanceof \Phantom\Http\Response) {
+                $response->send();
+            }
         });
 
         set_error_handler(function ($level, $message, $file, $line) {
